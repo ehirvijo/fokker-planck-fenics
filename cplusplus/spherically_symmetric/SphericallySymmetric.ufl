@@ -7,8 +7,14 @@ v = TestFunction(element)
 f = Coefficient(element)
 J = Coefficient(element)
 
+
 # Bilinear form
 a = inner(-J*grad(u),grad(v))*dx
 
 # Linear form
 L = f*v*J*dx
+
+# Differential form
+I = f*dx
+
+forms = [a,L,I]

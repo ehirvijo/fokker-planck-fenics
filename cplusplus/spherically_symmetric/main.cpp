@@ -40,6 +40,11 @@ int main()
   Function u(V);
   solve(a == L, u, bc);
 
+  // Let's test the integration using form language
+  SphericallySymmetric::Form_I integral(mesh);
+  integral.f=u;
+  std::cout << assemble(integral) << std::endl; 
+
   // Save solution in VTK format
   File file("spherically_symmetric.pvd");
   file << u;
