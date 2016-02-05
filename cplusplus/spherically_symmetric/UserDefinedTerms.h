@@ -10,10 +10,11 @@
 #define __UDEF_H
 
 #include <dolfin.h>
+#include "SphericallySymmetric.h"
 
 namespace dolfin
 {
-
+  
   class VeloBoundary : public SubDomain
   {
   private:
@@ -49,7 +50,17 @@ namespace dolfin
     // explicit constructor
     explicit LogarithmicIntervalMesh(const size_t&,const double&,const double&);
   };
- 
+  
+  class GreenBC : public Expression
+  {
+  public:
+    SphericallySymmetric::Form_I B;
+    
+    void eval(Array<double>& values, const Array<double>& x) const;
+
+explicit GreenBC(const Mesh& mesh, const Expression& f,const Expression& jac);
+  };
+
 }
 
 #endif

@@ -15,6 +15,6 @@ a = inner(-J*grad(u),grad(v))*dx
 L = f*v*J*dx
 
 # Differential form
-I = f*dx
+I = f*J*dx
 
 forms = [a,L,I]

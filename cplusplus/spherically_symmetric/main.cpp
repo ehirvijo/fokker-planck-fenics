@@ -24,8 +24,6 @@ int main()
   //constant is evaluated as TruncGreenIntegral(xmin,xmax)
   Constant u0(0.0); // zero for the moment
 
-  DirichletBC bc(V, u0, boundary);
-
   Source f;
   Jacobian x2;
 
@@ -35,16 +33,14 @@ int main()
   L.f = f;
   L.J = x2;
   a.J = x2;
-
+  
+  GreenBC gbc(mesh,f,x2);
+  DirichletBC bc(V, gbc, boundary);
+  
   // Compute solution
   Function u(V);
   solve(a == L, u, bc);
-
-  // Let's test the integration using form language
-  SphericallySymmetric::Form_I integral(mesh);
-  integral.f=u;
-  std::cout << assemble(integral) << std::endl; 
-
+  
   // Save solution in VTK format
   File file("spherically_symmetric.pvd");
   file << u;

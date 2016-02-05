@@ -49,3 +49,14 @@ LogarithmicIntervalMesh::LogarithmicIntervalMesh(const size_t& dim, const double
     this->coordinates()[i] = pow(10,loglow + double(i-1)*pivot); // check this
   }
 }
+
+
+//-----------------------------------------------------------------------------
+GreenBC::GreenBC(const Mesh& mesh, const Expression& f,const Expression& jac) : B(SphericallySymmetric::Form_I(mesh,f,jac))
+{}
+  
+
+void GreenBC::eval(Array<double>& values, const Array<double>& x) const
+{
+  values[0] = -assemble(B)/x[0];
+}

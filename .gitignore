@@ -35,3 +35,14 @@ CMakeScripts
 Makefile
 cmake_install.cmake
 install_manifest.txt
+
+
+# LaTeX
+####################
+*.aux
+*.bbl
+*.out
+*.aux
+*.auc
+*.log
+*.blg
