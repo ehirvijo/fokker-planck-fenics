@@ -1,0 +1,14 @@
+# Elements
+element = FiniteElement("Lagrange", interval, 3)
+
+# Trial and test functions
+u = TrialFunction(element)
+v = TestFunction(element)
+f = Coefficient(element)
+J = Coefficient(element)
+
+# Bilinear form
+a = inner(-J*grad(u),grad(v))*dx
+
+# Linear form
+L = f*v*J*dx
