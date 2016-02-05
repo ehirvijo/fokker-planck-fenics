@@ -47,7 +47,7 @@ namespace dolfin
   {
   public:
     // explicit constructor
-    explicit LogarithmicIntervalMesh(const size_t& dim,const double& leftb, const double& rightb);
+    explicit LogarithmicIntervalMesh(const size_t&,const double&,const double&);
   };
  
 }

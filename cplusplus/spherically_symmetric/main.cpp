@@ -9,21 +9,20 @@ int main()
 {
   // parameters for mesh creation (could appear as argv, argc)
   size_t nx=30;
-  double xmin=0;
+  double xmin=0.01;
   double xmax=10;
   
   // Create mesh
   LogarithmicIntervalMesh mesh(nx-1,xmin,xmax);
   
-  // Define function space for the mesh using Continuous Galerkin
-  // (Lagrange) functions of order p on each element
+  // Define Finite Element space (see ufl file)
   SphericallySymmetric::FunctionSpace V(mesh);
   
   // boundary object
   VeloBoundary boundary(xmax);
   // boundary condition
   //constant is evaluated as TruncGreenIntegral(xmin,xmax)
-  Constant u0(0.0);
+  Constant u0(0.0); // zero for the moment
 
   DirichletBC bc(V, u0, boundary);
 

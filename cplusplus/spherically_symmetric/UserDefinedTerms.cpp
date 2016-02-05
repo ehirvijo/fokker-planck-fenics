@@ -39,9 +39,9 @@ VeloBoundary::VeloBoundary(const double& ul) : rightbound(ul){}
 //-----------------------------------------------------------------------------
 
 // The logarithmically space mesh constructor 
-LogarithmicIntervalMesh::LogarithmicIntervalMesh(const size_t& dim,const double& leftb, const double& rightb) : IntervalMesh(dim,leftb,rightb)
+LogarithmicIntervalMesh::LogarithmicIntervalMesh(const size_t& dim, const double& leftplus, const double& rightb) : IntervalMesh(dim,0.,rightb)
 {
-  double loglow(-2.);   // you want to make this more general
+  double loglow=log10(leftplus);   // you want to make this more general
   // increment in log scale
   double pivot((log10(rightb)-loglow)/double(dim-1));
   //define mesh elements from 1 to dim-1
