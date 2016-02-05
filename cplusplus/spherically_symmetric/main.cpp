@@ -42,7 +42,7 @@ int main()
   solve(a == L, u, bc);
 
   // Save solution in VTK format
-  File file("biharmonic.pvd");
+  File file("spherically_symmetric.pvd");
   file << u;
 
   // Plot solution

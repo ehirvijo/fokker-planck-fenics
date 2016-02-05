@@ -5,6 +5,7 @@
 *.o
 *.so
 *.pyc
+*.x
 
 # Packages/Data #
 ############
