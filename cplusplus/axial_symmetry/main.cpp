@@ -10,14 +10,27 @@
 using namespace dolfin;
 
 // main programm
-int main()
+int main(int argc,char** argv)
 {
+  std::clock_t start(std::clock());
+  double duration;
+  
   // parameters for mesh creation (could appear as argv, argc)
-  size_t nr = 31 ; 
-  size_t nz = 21 ;
+  size_t nr = 51;
+  size_t nz = 50;
   double rmin = 0. ;
-  double rmax = 5. ;
-  double zabsmax = -5. ;
+  double rmax = 10. ;
+  double zabsmax = 10. ;
+  
+  if(argc==6) {
+    nr=std::atoi(argv[1]);
+    nz=std::atoi(argv[2]);
+    rmin=std::atof(argv[3]);
+    rmax=std::atof(argv[4]);
+    zabsmax=std::atof(argv[5]);
+
+    std::cout<<"using nr="<<nr<<", nz="<<nz<<", rmin="<<rmin<<", rmax="<<rmax<<", zabsmax="<<zabsmax<<std::endl;
+  }
   
   // Create a simple rectangular mesh
   RectangleMesh mesh(rmin,-zabsmax,rmax,zabsmax,nr,nz, std::string("right"));
@@ -62,6 +75,10 @@ int main()
   File file("axially_symmetric.pvd");
   file << u;
 
+  // Timing
+  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+  std::cout<<"duration: "<< duration <<std::endl;
+  
   // Plot solution
   plot(u);
   interactive();

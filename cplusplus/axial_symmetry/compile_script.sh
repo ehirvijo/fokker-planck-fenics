@@ -1,7 +1,7 @@
 #!/bin/bash
 # for compiling and running execute the following commands
 
-ffc -l dolfin Forms.ufl
+ffc -O -l dolfin Forms.ufl
 
 cmake .
 
