@@ -2,8 +2,8 @@
 //
 // This file is part of Fokker-Planck-Fenics
 
-#ifndef __UDEF_H
-#define __UDEF_H
+#ifndef __JAC_H
+#define __JAC_H
 
 #include <dolfin.h>
 

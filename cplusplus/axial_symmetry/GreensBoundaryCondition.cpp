@@ -7,14 +7,14 @@
 using namespace dolfin;
 
 // The class constructor
-GreensBoundaryCondition::GreensBoundaryCondition(const Mesh& m, const Expression& f, const Expression& k, const Expression& j) : greensSolution(Forms::Form_I(m,f,k,j))
+GreensBoundaryCondition::GreensBoundaryCondition(Forms::Form_I *gs,KphiRZ *k): _GS(gs),_K(k)
 {}
   
 // evaluation routine
 void GreensBoundaryCondition::eval(Array<double>& values, const Array<double>& x) const
 {
   // set up the greens function
-  K.set(x);
-  greensSolution.k=K;
-  values[0] = assemble(greensSolution);
+  _K->set(x);
+  _GS->k=*_K;
+  values[0] = assemble(*_GS);
 }

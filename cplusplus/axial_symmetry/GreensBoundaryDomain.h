@@ -2,8 +2,8 @@
 //
 // This file is part of Fokker-Planck-Fenics
 
-#ifndef __UDEF_H
-#define __UDEF_H
+#ifndef __GBD_H
+#define __GBD_H
 
 #include <dolfin.h>
 
@@ -20,7 +20,7 @@ namespace dolfin
 
     // set the tolerance parameter used for
     // checking if the point is on the boundary
-    static const double tol(1.E-15);
+    static const double tol;
     
   public:
 

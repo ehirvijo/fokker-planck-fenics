@@ -21,10 +21,11 @@ void KphiRZ::eval(Array<double>& values, const Array<double>& x) const
 {
   double mypi(3.14159265359);
   double k(4*r0*x[0]/((x[1]-z0)*(x[1]-z0)+(r0+x[0])*(r0+x[0])));
+
+  std::cout<<"r0 "<<r0<<" x0 "<<x[0]<<" x1 "<<x[1]<<" z0 "<<z0<<std::endl;
+  std::cout<<"k "<<k<<std::endl;
+  std::cout<<"elint "<<ellint_1(k)<<" value "<<values[0]<<std::endl;
+  
   values[0] = -ellint_1(k)/(mypi*sqrt((x[1]-z0)*(x[1]-z0)+(r0+x[0])*(r0+x[0])));
 }
-
-
-// default constructor for the type KphiRZ
-KphiRZ::KphiRZ(): Expression(), r0(0.0),z0(0.0) {}
 

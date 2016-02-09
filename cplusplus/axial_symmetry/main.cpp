@@ -23,8 +23,8 @@ int main()
   RectangleMesh mesh(rmin,-zabsmax,rmax,zabsmax,nr,nz, std::string("right"));
 
   // plot the mesh
-  plot(mesh);
-  interactive();
+  // plot(mesh);
+  // interactive();
 
   // Define Finite Element space (see ufl file)
   Forms::FunctionSpace V(mesh);
@@ -39,7 +39,8 @@ int main()
   // condition at the Dirichlet boundary
   Source f;
   Jacobian J;
-  KhiRZ Kphi;
+  KphiRZ Kphi;
+  Forms::Form_I gs(mesh,f,Kphi,J);
 
   // Define the variational problem
   Forms::BilinearForm a(V, V);
@@ -50,7 +51,7 @@ int main()
   
   // set up the Greens function boundary condition
   // using the expressions f, K_phi, J and the mesh
-  GreensBoundaryCondition gbc(mesh,f,Kphi,J);
+  GreensBoundaryCondition gbc(&gs,&Kphi);
   DirichletBC bc(V, gbc, boundary);
   
   // Compute solution

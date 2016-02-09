@@ -2,8 +2,8 @@
 //
 // This file is part of Fokker-Planck-Fenics
 
-#ifndef __UDEF_H
-#define __UDEF_H
+#ifndef __KPHIRZ_H
+#define __KPHIRZ_H
 
 #include <dolfin.h>
 
@@ -29,8 +29,6 @@ namespace dolfin
     
     // routine to set up the parameters
     void set(const Array<double>& x);
-
-    explicit KphiRZ();
     
   };
   

@@ -16,3 +16,4 @@ bool GreensBoundaryDomain::inside(const Array<double>& x, bool on_boundary) cons
   return on_boundary and abs(x[0])>tol;
 }
 
+const double GreensBoundaryDomain::tol=1.e-15;
