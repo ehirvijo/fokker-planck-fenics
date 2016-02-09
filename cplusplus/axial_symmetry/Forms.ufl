@@ -1,0 +1,26 @@
+# Elements
+element = FiniteElement("CG", triangle, 3)
+
+
+# Trial and test functions
+u = TrialFunction(element)
+v = TestFunction(element)
+f = Coefficient(element)
+k = Coefficient(element)
+J = Coefficient(element)
+
+
+# Bilinear form
+a = -inner(grad(u),grad(v))*J*dx
+#a = -J*(u.dx(1)*v.dx(1)+u.dx(2)*v.dx(2))*dx
+
+# Linear form
+L = f*v*J*dx
+
+# For computing integrals over the domain
+# with weight function k
+I = f*k*J*dx
+
+
+
+forms = [a,L,I]
