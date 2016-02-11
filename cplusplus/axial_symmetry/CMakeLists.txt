@@ -37,7 +37,7 @@ include_directories(SYSTEM ${DOLFIN_3RD_PARTY_INCLUDE_DIRS})
 #include "KphiRZ.h"
 #include "Source.h"
 #include "Jacobian.h"
-add_executable(${PROJECT_NAME} KphiRZ.cpp KpsiRZ.cpp BCphi.cpp BCpsi.cpp GreensBoundaryDomain.cpp Source.cpp Jacobian.cpp main.cpp)
+add_executable(${PROJECT_NAME} KphiRZ.cpp KpsiRZ.cpp BCphi.cpp BCpsi.cpp Source.cpp Jacobian.cpp main.cpp)
 
 # Target libraries
 target_link_libraries(${PROJECT_NAME} ${DOLFIN_LIBRARIES} ${DOLFIN_3RD_PARTY_LIBRARIES})

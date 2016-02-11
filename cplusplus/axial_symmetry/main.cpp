@@ -2,7 +2,6 @@
 #include "Forms.h"
 #include "BCphi.h"
 #include "BCpsi.h"
-#include "GreensBoundaryDomain.h"
 #include "KphiRZ.h"
 #include "KpsiRZ.h"
 #include "Source.h"
@@ -20,14 +19,12 @@ int main()
   // load mesh from the file
   Mesh mesh("half_circle.xml");
 
-  // Define Finite Element space (see ufl file)
+  // load the boundaries, specified with "Physical Line" in the .geo file
+  MeshFunction<size_t> boundaries(mesh, "half_circle_facet_region.xml");
+
+  // Construct the Finite Element space (see ufl file)
   Forms::FunctionSpace V(mesh);
   
-  // define the boundary on which
-  // the Dirichlet condition will
-  // beapplied
-  GreensBoundaryDomain boundary;
-
   // Define the expressions that are common for
   // both potential equations
   Jacobian J;
@@ -44,8 +41,8 @@ int main()
   L.f = f;
   Forms::Form_I gsphi(mesh,f,Kphi,J);
   BCphi gbcphi(&gsphi,&Kphi);
-  DirichletBC bcphi(V, gbcphi, boundary);
-  
+  DirichletBC bcphi(V, gbcphi, boundaries,1); // 1 refers to the .geo file 
+
   // Compute solution
   Function uphi(V);
   solve(a == L, uphi, bcphi);
@@ -56,16 +53,16 @@ int main()
   L.f = uphi;
   Forms::Form_I gspsi(mesh,f,Kpsi,J);
   BCpsi gbcpsi(&gspsi,&Kpsi);
-  DirichletBC bcpsi(V, gbcpsi, boundary);
-  
+  DirichletBC bcpsi(V, gbcpsi, boundaries,1); // 1 refers to the .geo file 
+    
   // Compute solution
   Function upsi(V);
   solve(a == L, upsi, bcpsi);
 
-  // // Save solution in VTK format
+  // Save solution in VTK format
   // File file("axially_symmetric.pvd");
   // file << u;
-
+  
   // Timing
   duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
   std::cout<<"duration: "<< duration <<std::endl;
