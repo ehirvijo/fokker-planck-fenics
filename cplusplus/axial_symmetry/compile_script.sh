@@ -7,4 +7,4 @@ cmake .
 
 make
 
-
+./generate_fenics_mesh.sh
