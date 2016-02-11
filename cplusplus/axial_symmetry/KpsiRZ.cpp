@@ -10,14 +10,14 @@ using boost::math::ellint_2;
 using namespace dolfin;
 
 // A method for setting the parameters
-void KphiRZ::set(const Array<double>& x)
+void KpsiRZ::set(const Array<double>& x)
 {
   r0=x[0];
   z0=x[1];
 }
  
 // A method to compute the value
-void KphiRZ::eval(Array<double>& values, const Array<double>& x) const
+void KpsiRZ::eval(Array<double>& values, const Array<double>& x) const
 {
   double mypi(3.14159265359);
   double k(4*r0*x[0]/((x[1]-z0)*(x[1]-z0)+(r0+x[0])*(r0+x[0])));
