@@ -20,7 +20,7 @@ namespace dolfin
   public:
     
     // Stores a reference to a UFL form
-    Forms::Form_I *_GS;
+    Forms::Form_weightedIntegral *_GS;
     KpsiRZ *_K;
     
     // a routine to evaluate the value of the Greens's function
@@ -33,7 +33,7 @@ namespace dolfin
     // (the Jacobian of the coordinate system) 
     // to the form "B", which then can be evaluated
     // by calling the "eval" function
-    explicit BCpsi(Forms::Form_I *gs, KpsiRZ *k);
+    explicit BCpsi(Forms::Form_weightedIntegral *gs, KpsiRZ *k);
 
   };
 

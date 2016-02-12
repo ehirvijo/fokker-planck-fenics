@@ -7,7 +7,7 @@
 using namespace dolfin;
 
 // The class constructor
-BCpsi::BCpsi(Forms::Form_I *gs,KpsiRZ *k): _GS(gs),_K(k)
+BCpsi::BCpsi(Forms::Form_weightedIntegral *gs,KpsiRZ *k): _GS(gs),_K(k)
 {}
   
 // evaluation routine

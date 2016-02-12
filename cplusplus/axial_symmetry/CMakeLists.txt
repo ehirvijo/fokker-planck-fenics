@@ -31,13 +31,7 @@ include_directories(${DOLFIN_INCLUDE_DIRS})
 include_directories(SYSTEM ${DOLFIN_3RD_PARTY_INCLUDE_DIRS})
 
 # Executable
-#include "Forms.h"
-#include "GreensBoundaryCondition.h"
-#include "GreensBoundaryDomain.h"
-#include "KphiRZ.h"
-#include "Source.h"
-#include "Jacobian.h"
-add_executable(${PROJECT_NAME} KphiRZ.cpp KpsiRZ.cpp BCphi.cpp BCpsi.cpp Source.cpp Jacobian.cpp main.cpp)
+add_executable(${PROJECT_NAME} KphiRZ.cpp KpsiRZ.cpp BCphi.cpp BCpsi.cpp Inistate.cpp Source.cpp Jacobian.cpp main.cpp)
 
 # Target libraries
 target_link_libraries(${PROJECT_NAME} ${DOLFIN_LIBRARIES} ${DOLFIN_3RD_PARTY_LIBRARIES})
