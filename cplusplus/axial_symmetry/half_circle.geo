@@ -1,11 +1,12 @@
-lc=0.5; // element "size"
-r = 5; // half circle radius
+lc1=2.0; // characteristic size at the half-circle
+lc2=0.05; // characteristic size at the center
+r = 10; // half circle radius
 
 // Define four points from which the halfcircle is constructed
-Point(1) = {0.0, 0.0, 0.0, lc};
-Point(2) = {0.0, -r, 0.0, lc};
-Point(3) = {r, 0.0, 0.0 ,lc};
-Point(4) = {0.0, r, 0.0, lc};
+Point(1) = {0.0, 0.0, 0.0, lc2};
+Point(2) = {0.0, -r, 0.0, lc1};
+Point(3) = {r, 0.0, 0.0 ,lc1};
+Point(4) = {0.0, r, 0.0, lc1};
 
 // construct lines and arcs from the points
 Line(1) = {1,2};
