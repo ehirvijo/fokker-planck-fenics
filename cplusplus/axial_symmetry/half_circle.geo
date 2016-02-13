@@ -1,6 +1,6 @@
-lc1=2.0; // characteristic size at the half-circle
-lc2=0.05; // characteristic size at the center
-r = 10; // half circle radius
+lc1=0.5; // characteristic size at the half-circle
+lc2=0.1; // characteristic size at the center
+r = 5; // half circle radius
 
 // Define four points from which the halfcircle is constructed
 Point(1) = {0.0, 0.0, 0.0, lc2};
