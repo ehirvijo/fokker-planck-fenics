@@ -10,4 +10,6 @@ rm -f CMakeCache.txt
 rm -f Forms.h
 rm -f *.msh
 rm -f *.xml
+rm -f *.vtu
+rm -f *.pvd
 
