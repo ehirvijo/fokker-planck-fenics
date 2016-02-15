@@ -7,4 +7,11 @@ cmake .
 
 make
 
-./generate_fenics_mesh.sh
+if [ $? -eq 0 ]; then
+    echo "Generating mesh"
+    ./generate_fenics_mesh.sh
+else
+    echo "C++ compiling errors. Verify your code."
+fi
+
+

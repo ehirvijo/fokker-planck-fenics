@@ -2,11 +2,11 @@
 //
 // This file is part of Fokker-Planck-Fenics
 
-#ifndef __BCPSI_H
-#define __BCPSI_H
+#ifndef __BCA_H
+#define __BCA_H
 
 #include <dolfin.h>
-#include "KpsiRZ.h"
+#include "KRZ.h"
 #include "Forms.h"
 
 namespace dolfin
@@ -15,13 +15,13 @@ namespace dolfin
   //--------------------------------------------------
   // Class to define the expression for the Dirichlet
   // condition at the "GreensBoundaryDomain"
-  class BCpsi : public Expression
+  class BCassembler : public Expression
   {
   public:
     
     // Stores a reference to a UFL form
     Forms::Form_weightedIntegral *_GS;
-    KpsiRZ *_K;
+    KRZ *_K;
     
     // a routine to evaluate the value of the Greens's function
     // solution at point x
@@ -33,10 +33,10 @@ namespace dolfin
     // (the Jacobian of the coordinate system) 
     // to the form "B", which then can be evaluated
     // by calling the "eval" function
-    explicit BCpsi(Forms::Form_weightedIntegral *gs, KpsiRZ *k);
-
+    explicit BCassembler(Forms::Form_weightedIntegral *gs, KRZ *k);
+    
   };
-
+  
 }
 
 #endif
