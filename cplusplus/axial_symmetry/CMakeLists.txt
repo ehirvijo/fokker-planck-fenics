@@ -15,20 +15,27 @@ project(${PROJECT_NAME})
 cmake_policy(SET CMP0004 OLD)
 
 # Get DOLFIN configuration data (DOLFINConfig.cmake must be in DOLFIN_CMAKE_CONFIG_PATH)
-find_package(DOLFIN)
+find_package(DOLFIN REQUIRED)
 
-# Default build type (can be overridden by user)
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
-    "Choose the type of build, options are: Debug MinSizeRel Release RelWithDebInfo." FORCE)
-endif()
+if (EXISTS ${DOLFIN_USE_FILE})
+  include(${DOLFIN_USE_FILE})
 
-# Compiler definitions
-add_definitions(${DOLFIN_CXX_DEFINITIONS})
+  # Default build type (can be overridden by user)
+  if (NOT CMAKE_BUILD_TYPE)
+     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
+     "Choose the type of build, options are: Debug MinSizeRel Release RelWithDebInfo." FORCE)
+     endif()
+else()	
+  # Compiler definitions
+  add_definitions(${DOLFIN_CXX_DEFINITIONS})
+
+  # Compiler flags
+  set(CMAKE_CXX_FLAGS "${DOLFIN_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")
 
 # Include directories
 include_directories(${DOLFIN_INCLUDE_DIRS})
 include_directories(SYSTEM ${DOLFIN_3RD_PARTY_INCLUDE_DIRS})
+endif()
 
 # Executable
 add_executable(${PROJECT_NAME} KRZ.cpp KphiRZ.cpp KpsiRZ.cpp BCassembler.cpp Inistate.cpp Source.cpp Jacobian.cpp main.cpp)
