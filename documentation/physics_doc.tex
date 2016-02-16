@@ -72,31 +72,31 @@ In these notes we take a simplified look at the kinetic processes that cause the
 %\tableofcontents
 
 \section{Model equations}
-The electron distribution function is assumed to be afffected by electric field, Coulomb collisions, by a source term of cold electrons from ionization of neutrals, and by a sink term describing loss of particles to the wall mimicking loss of plasma confinement. For now, and for sake of simplicity, we will neglect the ion-electron collisions, as they are much more infrequent than the electon-electron collisions. The kinetic model is thus described by 
+We assume the plasma to consist of species $a$, the one we follow from kinetic principles, and of possibly multiple other species $b$ which are assumed to be Maxwellian. The distribution function of species $a$ is assumed to be affected by electric field, Coulomb collisions, by different source and sink terms, e.g., source of cold electrons from ionization of neutrals, or sink of particles mimicking the loss of plasma confinement. The kinetic model for the distribution function of species $a$ is thus described by 
 \begin{equation}
-\frac{\partial f}{\partial t} -\frac{e\bm{E}}{m}\cdot\frac{\partial f}{\partial\bm{v}}= C[f,f]+s_{\textrm{cold}}-s_{\textrm{loss}},
+\frac{\partial f_a}{\partial t} + \frac{e_a\bm{E}}{m_a}\cdot\frac{\partial f_a}{\partial\bm{v}}= C_{aa}[f_a,f_a]+C_{ab}[f_a,f_b]+s,
 \end{equation}
-where the Fokker-Planck collision operator for like species collisions is given by 
+where the Fokker-Planck collision operator for collisions between species $a$ and $b$ is 
 \begin{equation}
-C[f,f]=\left(\frac{e^4\ln\Lambda}{m^2\varepsilon_0^2}\right)\frac{\partial}{\partial\bm{v}}\cdot\left(\frac{\partial\phi}{\partial\bm{v}} f-\frac{\partial^2\psi}{\partial\bm{v}\partial\bm{v}}\cdot\frac{\partial f}{\partial\bm{v}}\right),
+C_{ab}[f_a,f_b]=\left(\frac{e_a^2e_b^2\ln\Lambda_{ab}}{m_a^2\varepsilon_0^2}\right)\frac{\partial}{\partial\bm{v}}\cdot\left(\frac{m_a}{m_b}\frac{\partial\phi_b}{\partial\bm{v}} f_a-\frac{\partial^2\psi_b}{\partial\bm{v}\partial\bm{v}}\cdot\frac{\partial f_a}{\partial\bm{v}}\right).
 \end{equation}
 and the Rosenbluth potentials are
 \begin{equation}
-\phi(\bm{v})=-\frac{1}{4\pi}\int f(\bm{v}')\frac{1}{\mid \bm{v}-\bm{v}'\mid}d\bm{v}',\qquad \psi(\bm{v})=-\frac{1}{8\pi}\int f(\bm{v}')\mid \bm{v}-\bm{v}'\mid d\bm{v}'.
+\phi(\bm{v})=-\frac{1}{4\pi}\int f(\bm{v}')\frac{1}{\mid \bm{v}-\bm{v}'\mid}d\bm{v}',\qquad \psi(\bm{v})=-\frac{1}{8\pi}\int f(\bm{v}')\mid \bm{v}-\bm{v}'\mid d\bm{v}',
 \end{equation}
-But before we proceed any further, it is good to start working with dimensionless quantities. 
+The source $s$ is assumed to be at most linear in $f_a$. 
 
-We define $\bm{x}=\bm{v}/v_0$, where $v_0$ is a fixed reference velocity. Thus the volume element becomes $d\bm{v}=v_0^3d\bm{x}$ and any velocity space moment becomes $\int \bm{v}^n fd\bm{v}=v_0^{3+n}\int \bm{x}^nf d\bm{x}$. We also normalize the distribution function and define $F=v_0^3f/n_0$ so that any physical velocity space moment is given by $\int \bm{v}^n fd\bm{v}=n_0v_0^{n}\int \bm{x}^nF d\bm{x}$. If we also define normalized time $\tau=t/t_0$ where $t_0$ is a fixed reference time scale, we can write the dimensionless kinetic equation for $F$ according to 
+But before we proceed any further, it is good to start working with dimensionless quantities. We define $\bm{x}=\bm{v}/v_0$, where $v_0$ is a fixed reference velocity. Thus the volume element becomes $d\bm{v}=v_0^3d\bm{x}$ and any velocity space moment becomes $\int \bm{v}^n fd\bm{v}=v_0^{3+n}\int \bm{x}^nf d\bm{x}$. We also normalize the distribution function and define $F=v_0^3f/n_0$ so that any physical velocity space moment is given by $\int \bm{v}^n fd\bm{v}=n_0v_0^{n}\int \bm{x}^nF d\bm{x}$. In addition, we define normalized time $\tau=t/t_0$ where $t_0$ is a fixed reference time scale. The fixed quantities are used to allow efficient implementation of time-depending sources. The kinetic equation for the normalized distribution function $F_a$ then becomes
 \begin{equation}
-\frac{\partial F}{\partial\tau}-\bar{\bm{E}}\cdot\nabla F\\=\nu C[F,F]+S
+\frac{\partial F_a}{\partial\tau}-\bar{\bm{E}}\cdot\nabla F_a\\=\nu_{aa} C[F_a,F_a]+\nu_{ab} C[F_a,F_b]+S
 \end{equation}
 where the normalized dimensionless quantities are
 \begin{equation}
-\bar{\bm{E}}=\frac{t_0e}{mv_0}\bm{E},\qquad \nu=\left(\frac{t_0n_0e^4\ln\Lambda}{v_0^3m^2\varepsilon_0^2}\right),\qquad S=\frac{v_0^3t_0}{n_0}s.
+\bar{\bm{E}}=\frac{t_0e}{mv_0}\bm{E},\qquad \nu_{ab}=\left(\frac{t_0n_0e_a^2e_b^2\ln\Lambda_{ab}}{v_0^3m_a^2\varepsilon_0^2}\right),\qquad S=\frac{v_0^3t_0}{n_0}s.
 \end{equation}
 The collision operator in the equation is then written simply
 \begin{equation}
-C[F,F]=\nabla\cdot\left(\nabla\Phi F-\nabla\nabla\Psi\cdot\nabla F\right)
+C[F_a,F_b]=\nabla\cdot\left(\frac{m_a}{m_b}\nabla\Phi_b F_a-\nabla\nabla\Psi_b\cdot\nabla F_a\right)
 \end{equation}
 and the Rosenbluth potentials become
 \begin{equation}
@@ -106,67 +106,67 @@ and satisfy the Poisson equations $\nabla^2\Phi = F$ and $\nabla^2\Psi =\Phi$.
 
 
 \section{Weak formulation with backward Euler step}
-Because the kinetic equation is stiff, the time discretization should be backward differentiation. We will use backward Euler, approximating the time derivative of distribution function at time instance $s$ with the expression $\partial F^{s}/\partial\tau\approx (F^{s}-F^{s-1})/\Delta \tau$. Further, because we cannot handle infinite domains, the space must be truncated. With that in mind, we multiply the kinetic equation with a test function $F^{\star}$ and integrate over the computational domain $\Omega$:
+Because the kinetic equation is stiff, the time discretization should be done by backward differentiation. We will use backward Euler, approximating the time derivative of distribution function at time instance $s$ with the expression $\partial F^{s}/\partial\tau\approx (F^{s}-F^{s-1})/\Delta \tau$. Further, because we cannot handle infinite domains, the space must be truncated. With that in mind, we multiply the kinetic equation with a test function $F^{\star}$ and integrate over the computational domain $\Omega$:
 \begin{multline}
-\int_{\Omega}F^{\star}\left(F^s -\Delta\tau S^s-\Delta\tau\bar{\bm{E}}\cdot\nabla F^s\right)d\bm{x}
-+\nu\Delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\nabla \Phi^s F^s-\nabla\nabla\Psi^s\cdot\nabla F^s\right)d\bm{x}\\
--\nu\Delta\tau\int_{\partial\Omega}F^{\star}\left(F^s\nabla\Phi^s-\nabla F^s\cdot\nabla\nabla\Psi^s\right)\cdot d\bm{\sigma}
+\int_{\Omega}F^{\star}\left(F_a^s -\Delta\tau S^s-\Delta\tau\bar{\bm{E}}\cdot\nabla F_a^s\right)d\bm{x}
++\sum_b\nu_{ab}\Delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\frac{m_a}{m_b}\nabla \Phi_b^s F_a^s-\nabla\nabla\Psi^s\cdot\nabla F^s\right)d\bm{x}\\
+-\sum_b\nu_{ab}\Delta\tau\int_{\partial\Omega}F^{\star}\left(F_a^s\frac{m_a}{m_b}\nabla\Phi_b^s-\nabla F_a^s\cdot\nabla\nabla\Psi_b^s\right)\cdot d\bm{\sigma}
 =\int_{\Omega}F^{\star}F^{s-1}d\bm{x}.
 \end{multline}
-Similarly we do for the Poisson equations
+Since the distributions $F_b$ are assumed given, we consider the Poisson equations only for the species $a$, the:
 \begin{align}
--\int_{\Omega}\nabla\Phi^s\cdot\nabla\Phi^{\star}d\bm{x}+\int_{\partial\Omega}\Phi^{\star}\nabla\Phi^s\cdot d\bm{\sigma}&=\int_{\Omega}F^s\Phi^{\star}d\bm{x}\\
--\int_{\Omega}\nabla\Psi^s\cdot\nabla\Psi^{\star}d\bm{x}+\int_{\partial\Omega}\Psi^{\star}\nabla\Psi^s\cdot d\bm{\sigma}&=\int_{\Omega}\Phi^s\Phi^{\star}d\bm{x}.
+-\int_{\Omega}\nabla\Phi_a^s\cdot\nabla\Phi^{\star}d\bm{x}+\int_{\partial\Omega}\Phi^{\star}\nabla\Phi_a^s\cdot d\bm{\sigma}&=\int_{\Omega}F_a^s\Phi^{\star}d\bm{x}\\
+-\int_{\Omega}\nabla\Psi_a^s\cdot\nabla\Psi^{\star}d\bm{x}+\int_{\partial\Omega}\Psi^{\star}\nabla\Psi_a^s\cdot d\bm{\sigma}&=\int_{\Omega}\Phi_a^s\Psi^{\star}d\bm{x}.
 \end{align}
-When we truncate the space, the distribution function $F$ is assumed to ``die off'' very fast and to be negligible outside the domain $\Omega$. This allows us to use the truncated definitions for the potential functions and to define Dirichlet conditions for the Poisson equations at the boundary $\partial\Omega$. 
+When we truncate the space, the distribution function $F_a$ is assumed to ``die off'' very fast and to be negligible outside the domain $\Omega$. This allows us to use the truncated definitions for the potential functions and to define Dirichlet conditions for the Poisson equations at the boundary $\partial\Omega$. 
 
-To formulate the weak problems, we assume an $n$-th order Sobolev space for the test functions $V=\{v\in H^n(\Omega) \mid v(\partial\Omega)=0 \}$ which, together with the conditions that $\Phi$ and $\Psi$ are smooth functions, allows us to get rid of the boundary terms in the Poisson equations: A Dirichlet condition is needed to make the potentials unique, the Neumann condition is not needed. The Weak formulation for the first Rosenbluth potential is then 
+To mathematically formulate the weak problems, we assume an $n$-th order Sobolev space for the test functions $V=\{v\in H^n(\Omega) \mid v(\partial\Omega)=0 \}$ which, together with the conditions that $\Phi$ and $\Psi$ are smooth functions, allows us to get rid of the boundary terms in the Poisson equations: A Dirichlet condition is needed to make the potentials unique, the Neumann condition is not needed. The Weak formulation for the first Rosenbluth potential is then 
 \begin{align}
-&-\int_{\Omega}\nabla\Phi^s\cdot\nabla\Phi^{\star}d\bm{x}=\int_{\Omega}F^s\Phi^{\star}d\bm{x}, \quad \bm{x}\in\Omega, \quad \forall \Phi^{\star}\in V\\
-&\Phi^s(\bm{x})=-\frac{1}{4\pi}\int \frac{F^s(\bm{y})}{\mid \bm{x}-\bm{y}\mid}d\bm{y}, \quad \bm{x}\in\partial\Omega,
+&-\int_{\Omega}\nabla\Phi_a^s\cdot\nabla\Phi^{\star}d\bm{x}=\int_{\Omega}F_a^s\Phi^{\star}d\bm{x}, \quad \bm{x}\in\Omega, \quad \forall \Phi^{\star}\in V\\
+&\Phi_a^s(\bm{x})=-\frac{1}{4\pi}\int \frac{F_a^s(\bm{y})}{\mid \bm{x}-\bm{y}\mid}d\bm{y}, \quad \bm{x}\in\partial\Omega,
 \end{align}
 and for the second potential we have similarly
 \begin{align}
-&-\int_{\Omega}\nabla\Psi^s\cdot\nabla\Psi^{\star}d\bm{x}=\int_{\Omega}\Phi^s\Psi^{\star}d\bm{x}, \quad \bm{x}\in\Omega, \quad \forall \Psi^{\star}\in V\\
-&\Psi^s(\bm{x})=-\frac{1}{8\pi}\int F^s(\bm{y})\mid \bm{x}-\bm{y}\mid d\bm{y}, \quad \bm{x}\in\partial\Omega.
+&-\int_{\Omega}\nabla\Psi_a^s\cdot\nabla\Psi^{\star}d\bm{x}=\int_{\Omega}\Phi_a^s\Psi^{\star}d\bm{x}, \quad \bm{x}\in\Omega, \quad \forall \Psi^{\star}\in V\\
+&\Psi_a^s(\bm{x})=-\frac{1}{8\pi}\int F_a^s(\bm{y})\mid \bm{x}-\bm{y}\mid d\bm{y}, \quad \bm{x}\in\partial\Omega.
 \end{align}
-Assuming the distribution function to vanish at the boundary, i.e., $F^s(\partial\Omega)=0$, the equation for $F^s$ becomes
+Assuming the distribution function and its gradient to vanish at the boundary, the equation for $F_a^s$ becomes
 \begin{multline}
-\int_{\Omega}F^{\star}\left(F^s -\Delta\tau S^s-\Delta\tau\bar{\bm{E}}\cdot\nabla F^s\right)d\bm{x}
-+\nu\Delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\nabla \Phi^s F^s-\nabla\nabla\Psi^s\cdot\nabla F^s\right)d\bm{x}\\
-=\int_{\Omega}F^{\star}F^{s-1}d\bm{x}, \quad \bm{x}\in\Omega, \quad \forall F^{\star}\in V.
+\int_{\Omega}F^{\star}\left(F_a^s -\Delta\tau S^s-\Delta\tau\bar{\bm{E}}\cdot\nabla F^s\right)d\bm{x}
++\sum_b\nu_{ab}\Delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\frac{m_a}{m_b}\nabla \Phi_b^s F_a^s-\nabla\nabla\Psi_b^s\cdot\nabla F_a^s\right)d\bm{x}\\
+=\int_{\Omega}F^{\star}F_a^{s-1}d\bm{x}, \quad \bm{x}\in\Omega, \quad \forall F^{\star}\in V.
 \end{multline}
 
-For a general set of curvilinear coordinates $x^{i}(x^1,x^2,x^3)$ with a metric tensor $g_{ij}$, the collision operator can be conveniently expressed as 
-\begin{equation}
-C=\sqrt{g}^{-1}\partial_i\left[\sqrt{g}K^if-\sqrt{g}D^{ij}\partial_jf\right],
-\end{equation}
-where the covariant components of the friction and diffusion terms are
-\begin{equation}
-K^i=\e^{i}\cdot \nabla\Phi = g^{ij}\partial_j\Phi,\qquad D^{ij}=\e^i\cdot\nabla\nabla\Psi\cdot\e^j=g^{ik}g^{j\ell}\left(\partial^2_{k\ell}\Psi-\Gamma^m_{k\ell}\partial_m \Psi\right).
-\end{equation}
-and $\Gamma^i_{jk}=\partial_k \e_j\cdot\e^i=g^{i\ell}\left(\partial_k g_{\ell j}+\partial_j g_{\ell k}-\partial_{\ell} g_{jk}\right)/2$ is the Christoffel symbol of the second kind.
+% For a general set of curvilinear coordinates $x^{i}(x^1,x^2,x^3)$ with a metric tensor $g_{ij}$, the collision operator can be conveniently expressed as 
+% \begin{equation}
+% C=\sqrt{g}^{-1}\partial_i\left[\sqrt{g}K^if-\sqrt{g}D^{ij}\partial_jf\right],
+% \end{equation}
+% where the covariant components of the friction and diffusion terms are
+% \begin{equation}
+% K^i=\e^{i}\cdot \nabla\Phi = g^{ij}\partial_j\Phi,\qquad D^{ij}=\e^i\cdot\nabla\nabla\Psi\cdot\e^j=g^{ik}g^{j\ell}\left(\partial^2_{k\ell}\Psi-\Gamma^m_{k\ell}\partial_m \Psi\right).
+% \end{equation}
+% and $\Gamma^i_{jk}=\partial_k \e_j\cdot\e^i=g^{i\ell}\left(\partial_k g_{\ell j}+\partial_j g_{\ell k}-\partial_{\ell} g_{jk}\right)/2$ is the Christoffel symbol of the second kind.
 
-In our case, the distribution function will have symmetry along the axis of the electric field, and natural choice of coordinates being either spherical or cylindrical. It is thus usefull to express the weak forms directly in curvilinear coordinates and we get:
-\begin{itemize}
-\item[1.] Weak formulation for the distribution function: 
-$F^s(\partial\Omega)=0$.
-\begin{multline}
-\int_{\Omega}F^{\star}\left(F^s -\Delta\tau S^s-\Delta\tau\bar{E}^i\partial_i F^s\right)\sqrt{g}dx^1dx^2dx^3\\
-+\nu\Delta\tau\int_{\Omega}\partial_iF^{\star}\left[g^{ij}\partial_j\Phi^s F^s-g^{ik}g^{j\ell}\left(\partial^2_{k\ell}\Psi^s-\Gamma^m_{k\ell}\partial_m \Psi^s\right)\partial_j F^s\right]\sqrt{g}dx^1dx^2dx^3\\
-=\int_{\Omega}F^{\star}F^{s-1}\sqrt{g}dx^1dx^2dx^3, \quad \bm{x}\in\Omega, \quad \forall F^{\star}\in V,
-\end{multline}
-\item[2.] Weak formulation for the first Rosenbluth potential:
-\begin{align}
--\int_{\Omega}\partial_i\Phi^sg^{ij}\partial_j\Phi^{\star}\sqrt{g}dx^1dx^2dx^3&=\int_{\Omega}F^s\Phi^{\star}\sqrt{g}dx^1dx^2dx^3, \quad \bm{x}\in\Omega, \quad \forall \Phi^{\star}\in V\\
-\Phi^s(\bm{x})&=-\frac{1}{4\pi}\int \frac{F^s(\bm{y})}{\mid \bm{x}-\bm{y}\mid}\sqrt{g}dy^1dy^2dy^3, \quad \bm{x}\in\partial\Omega,
-\end{align}
-\item[3.] Weak formulation for the second Rosenbluth potential:
-\begin{align}
--\int_{\Omega}\partial_i\Psi^s g^{ij}\partial_j\Psi^{\star}\sqrt{g}dx^1dx^2dx^3&=\int_{\Omega}\Phi^s\Psi^{\star}\sqrt{g}dx^1dx^2dx^3, \quad \bm{x}\in\Omega, \quad \forall \Psi^{\star}\in V\\
-\Psi^s(\bm{x})&=-\frac{1}{8\pi}\int F^s(\bm{y})\mid \bm{x}-\bm{y}\mid \sqrt{g}dy^1dy^2dy^3, \quad \bm{x}\in\partial\Omega.
-\end{align}
-\end{itemize}
+% In our case, the distribution function will have symmetry along the axis of the electric field, and natural choice of coordinates being either spherical or cylindrical. It is thus usefull to express the weak forms directly in curvilinear coordinates and we get:
+% \begin{itemize}
+% \item[1.] Weak formulation for the distribution function: 
+% $F^s(\partial\Omega)=0$.
+% \begin{multline}
+% \int_{\Omega}F^{\star}\left(F^s -\Delta\tau S^s-\Delta\tau\bar{E}^i\partial_i F^s\right)\sqrt{g}dx^1dx^2dx^3\\
+% +\nu\Delta\tau\int_{\Omega}\partial_iF^{\star}\left[g^{ij}\partial_j\Phi^s F^s-g^{ik}g^{j\ell}\left(\partial^2_{k\ell}\Psi^s-\Gamma^m_{k\ell}\partial_m \Psi^s\right)\partial_j F^s\right]\sqrt{g}dx^1dx^2dx^3\\
+% =\int_{\Omega}F^{\star}F^{s-1}\sqrt{g}dx^1dx^2dx^3, \quad \bm{x}\in\Omega, \quad \forall F^{\star}\in V,
+% \end{multline}
+% \item[2.] Weak formulation for the first Rosenbluth potential:
+% \begin{align}
+% -\int_{\Omega}\partial_i\Phi^sg^{ij}\partial_j\Phi^{\star}\sqrt{g}dx^1dx^2dx^3&=\int_{\Omega}F^s\Phi^{\star}\sqrt{g}dx^1dx^2dx^3, \quad \bm{x}\in\Omega, \quad \forall \Phi^{\star}\in V\\
+% \Phi^s(\bm{x})&=-\frac{1}{4\pi}\int \frac{F^s(\bm{y})}{\mid \bm{x}-\bm{y}\mid}\sqrt{g}dy^1dy^2dy^3, \quad \bm{x}\in\partial\Omega,
+% \end{align}
+% \item[3.] Weak formulation for the second Rosenbluth potential:
+% \begin{align}
+% -\int_{\Omega}\partial_i\Psi^s g^{ij}\partial_j\Psi^{\star}\sqrt{g}dx^1dx^2dx^3&=\int_{\Omega}\Phi^s\Psi^{\star}\sqrt{g}dx^1dx^2dx^3, \quad \bm{x}\in\Omega, \quad \forall \Psi^{\star}\in V\\
+% \Psi^s(\bm{x})&=-\frac{1}{8\pi}\int F^s(\bm{y})\mid \bm{x}-\bm{y}\mid \sqrt{g}dy^1dy^2dy^3, \quad \bm{x}\in\partial\Omega.
+% \end{align}
+% \end{itemize}
 
 The only complication in our system is the nonlinearity: because the potential functions depend on $F^s$, the weak formulation for $F^s$ is not linear. Fortunately, there is a simple recipe for solving these kind of problems, namely the Banach or Picard-Lindel\"of iteration. One starts with some function $\tilde{F}$, uses that to compute approximations for the potential functions, and solves the weak problem for $F^s$ with simple matrix inversion. Then this solution is used to compute new values for the potentials, and an iterative method is ready. For our particular case this is expected to work reasonably well because the distribution is not expected to change radically due to collisions from one time point to the next. And since we have an initial state for the distribution function, our guess for the potentials is typically close to the correct expression. It is not uncommon at all to actually use only the first iteration, in which case the backward time differentiation results in an equation which can be solved with one matrix solve. Nevertheless, more sophisticated approaches also exist.
 
