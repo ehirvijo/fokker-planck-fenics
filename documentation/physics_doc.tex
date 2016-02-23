@@ -1,4 +1,4 @@
-\documentclass[reprint]{revtex4}
+\documentclass[preprint]{revtex4}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
@@ -67,7 +67,7 @@ In order to model the thermal quench and the electron distribution function from
 
 The model we propose includes nonlinear description for the electron-electron collision, linear treatment of electron-ion collisions, and linear source and sink terms. The accelerating electric field is computed from the condition that the plasma current density remains constant. The concept of plasma conductivity is not needed, since the electron-electron collisions are treated nonlinearly and the collisions with ions are included in the model. The spitzer response is thus automatically included.
 
-Since the distribution function is assumed to be elongated along the direction of the electric, especially if the electric exceeds the so-called critical field for runaway generation, we discretize our equations with Finite-Element formulation. This allows efficient use of unstructurized meshes.
+Since the distribution function is assumed to be elongated along the direction of the electric, especially if the electric exceeds the so-called critical field for runaway generation, we discretize our equations with Finite-Element formulation to allow use of unstructurized meshes. This is expected to also reduce the burden of computing the Green's function boundary condition on the boundary of the computational domain: the mesh can be chosen very sparse on the boundary.
 \end{abstract}
 
 %\pacs{put Pacs here}
@@ -120,7 +120,7 @@ Because the kinetic equation is stiff, the time discretization should be done by
  With that in mind, we multiply the kinetic equation with a test function $F^{\star}$ and integrate over the computational domain $\Omega$:
 \begin{multline}
 \int_{\Omega}F^{\star}\left(F_a^s -\delta\tau S^s+\delta\tau\bar{\bm{E}}\cdot\nabla F_a^s+\delta\tau t_0L[F_a^s]\right)d\bm{x}
-+\sum_b\nu_{ab}\delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\frac{m_a}{m_b}\nabla \Phi_b^s F_a^s-\nabla\nabla\Psi^s\cdot\nabla F^s\right)d\bm{x}\\
+\\+\sum_b\nu_{ab}\delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\frac{m_a}{m_b}\nabla \Phi_b^s F_a^s-\nabla\nabla\Psi^s\cdot\nabla F^s\right)d\bm{x}\\
 -\sum_b\nu_{ab}\delta\tau\int_{\partial\Omega}F^{\star}\left(F_a^s\frac{m_a}{m_b}\nabla\Phi_b^s-\nabla F_a^s\cdot\nabla\nabla\Psi_b^s\right)\cdot d\bm{\sigma}
 =\int_{\Omega}F^{\star}F^{s-1}d\bm{x}.
 \end{multline}
@@ -144,11 +144,11 @@ and for the second potential we have similarly
 Since we are not imposing Neumann conditions on $F^s_a$, only the Dirichlet condition, the boundary integral term vanishes in the equation for $F_a$, and the weak formulation becomes
 \begin{multline}
 \int_{\Omega}F^{\star}\left(F_a^s -\delta\tau S^s-\delta\tau\bar{\bm{E}}\cdot\nabla F^s+\delta\tau t_0L[F_a^s]\right)d\bm{x}
-+\sum_b\nu_{ab}\delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\frac{m_a}{m_b}\nabla \Phi_b^s F_a^s-\nabla\nabla\Psi_b^s\cdot\nabla F_a^s\right)d\bm{x}\\
+\\+\sum_b\nu_{ab}\delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\frac{m_a}{m_b}\nabla \Phi_b^s F_a^s-\nabla\nabla\Psi_b^s\cdot\nabla F_a^s\right)d\bm{x}\\
 =\int_{\Omega}F^{\star}F_a^{s-1}d\bm{x}, \quad \bm{x}\in\Omega, \quad \forall F^{\star}\in V.
 \end{multline}
 
-The only complication in our system is the nonlinearity: because the potential functions depend on $F^s_a$, the weak formulation for $F^s_a$ is not linear. In order to express the kinetic equation completely in terms of the distribution function only, we have to switch to the finite-element presentation, solve the potentials in terms of the degrees of freedom of $F^s_a$, and put the expressions back into the weak form for the kinetic equation. In the end, we will end up with a bilinear form for the degrees-of-freedom for $F_a^s$, which is then solved with Newton's method which has a quadratic convergence rate.
+The only complication in our system is the nonlinearity: because the potential functions depend on $F^s_a$, the weak formulation for $F^s_a$ is not linear. In order to express the kinetic equation completely in terms of the distribution function only, we have to switch to the finite-element presentation, solve the potentials in terms of the degrees of freedom of $F^s_a$, and put the expressions back into the weak form for the kinetic equation. In the end, we will end up with a bilinear form for the degrees-of-freedom for $F_a^s$, which is then solved with Newton's method. This is expected to work well, since the Newton's method has a quadratic convergence rate.
 
 \subsection{Degrees-of-freedom representation}
 We choose our finite-element space to be a set of functions $\{\lambda_i(\bm{x})\}_{i=1}^{N}$, and we assume the mesh given. Then we approximate the distribution function to be of the form $F^s_a(\bm{x})=F^s_{a,i}\lambda_i(\bm{x})$. If we now compute the Green's function solutions for the potential, we find
@@ -170,7 +170,30 @@ For the second potential equation, only the source term and the boundary conditi
 a_{[B]ij}\Psi^s_{a,j}=\lambda_{[\psi]ij}F^s_{a,j},\quad \lambda_{[\psi]ij}=\lambda_{ik}a_{[B]k\ell}^{-1}\lambda_{[\phi]\ell j}(1-\delta_{iB})+\delta_{iB}G_{[\psi]ij}.
 \end{equation}
 
-Having solved the potential equations in terms of the degrees-of-freedom for the distribution function, we then turn our attention to the kinetic equation.
+Having solved the potential equations in terms of the degrees-of-freedom for the distribution function, we then turn our attention to the kinetic equation. Testing the kinetic equation for each of the elements in our finite-element space, we find 
+\begin{multline}
+\left[\lambda_{ij}-\delta\tau E^sE_{ij}+\delta\tau t_0L_{ij}+\sum_{b\neq a}\nu_{ab}\delta\tau\left(\frac{m_a}{m_b}\Phi^s_{b,ij}-\Psi^s_{b,ij}\right)\right]F^s_{a,j}-\delta\tau S^s_i\\+\nu_{aa}\delta\tau\left(\Phi^s_{a,k}F^s_{a,j}c_{[\phi]ijk}-\Psi^s_{a,k}F^s_{a,j}c_{[\psi]ijk}\right)=\lambda_{ij}F^{s-1}_{a,j},
+\end{multline}
+where we have the coefficients for the linear terms
+\begin{equation}
+E_{ij}=\int_\Omega\bm{\hat{e}}\cdot\lambda_i\nabla\lambda_jd\bm{x},\qquad \Phi^s_{b,ij}=\int_\Omega\nabla\lambda_i\cdot\nabla\Phi^s_{b}\lambda_jd\bm{x},\qquad \Psi^s_{b,ij}=\int_\Omega\nabla\lambda_i\cdot\nabla\nabla\Psi^s_{b}\cdot\nabla\lambda_jd\bm{x},
+\end{equation}
+where $\bm{\hat{e}}$ is the unit direction of the electric field $\bm{E}$, and the coefficients for the nonlinear terms are given by
+\begin{equation}
+c_{[\phi]ijk}=\int_\Omega\nabla\lambda_i\cdot\nabla\lambda_k\lambda_j,\qquad c_{[\psi]ijk}=\int_\Omega\nabla\lambda_i\cdot\nabla\nabla\lambda_k\cdot\nabla\lambda_j.
+\end{equation}
+Finally, we can discretize the current conservation constraint giving us
+\begin{equation}
+j_i(F^s_{a,i}-F^{s-1}_{a,i})=0,\qquad j_i=\int_\Omega\bm{\hat{e}}\cdot\bm{x}\lambda_id\bm{x}.
+\end{equation}
+
+If we then substitute the solutions for the potentials, we find a coupled system of nonlinear equations for the degrees-of-freedom $F_j,E$ in our system
+\begin{align}
+c_i+\left(b_{ij}+Ee_{ij}\right)F_j+c_{ijk}F_jF_k&=0,\\
+j_iF_i-j_0&=0.
+\end{align}
+
+
 
 %Fortunately, there is a simple recipe for solving these kind of problems, namely the Banach or Picard-Lindel\"of iteration. One starts with some function $\tilde{F}$, uses that to compute approximations for the potential functions, and solves the weak problem for $F^s$ with simple matrix inversion. Then this solution is used to compute new values for the potentials, and an iterative method is ready. For our particular case this is expected to work reasonably well because the distribution is not expected to change radically due to collisions from one time point to the next. And since we have an initial state for the distribution function, our guess for the potentials is typically close to the correct expression. It is not uncommon at all to actually use only the first iteration, in which case the backward time differentiation results in an equation which can be solved with one matrix solve. Nevertheless, more sophisticated approaches also exist.
 
