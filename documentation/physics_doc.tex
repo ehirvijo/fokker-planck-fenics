@@ -161,10 +161,16 @@ On the other hand, in order to solve the Poisson equations, the potentials must 
 \begin{equation}
 a_{ij}\Phi^s_{a,j}=\lambda_{ij}F^s_{a,j},\qquad a_{ij}=-\int_\Omega\nabla\lambda_i\cdot\nabla\lambda_jd\bm{x},\qquad \lambda_{ij}=\int_\Omega\lambda_i\lambda_jd\bm{x}.
 \end{equation}
-Since the basis functions $\lambda_i(\bm{x})$ are designed in a way that they get the value $1$ at the point $\bm{x}_i$ and are supported only by those mesh elements that have $\bm{x}_i$ as one of the vertices, and are zero outside the region of support, we have to modify the matrix $a_{ij}$ and $\lambda_{ij}$ a bit, and our final equations for the first potential become
+Since the basis functions $\lambda_i(\bm{x})$ are designed in a way that they get the value $1$ at the point $\bm{x}_i$ and are supported only by those mesh elements that have $\bm{x}_i$ as one of the vertices, and are zero outside the region of support, it is easy to modify the matrix $a_{ij}$ and $\lambda_{ij}$ to include the Dirichlet conditions. Thus the final equations for the first potential become
 \begin{equation}
-a_{ij}^{[\phi]}\Phi^s_{a,j}=\lambda^{[\phi]}_{ij}F^s_{a,j},\qquad a^{[\phi]}_{ij}=\lambda_{ij}\left(1-\delta_{iB}\right) + \delta_{iB},\qquad \lambda_{ij}=\int_\Omega\lambda_i\lambda_jd\bm{x}.
+a_{[B]ij}\Phi^s_{a,j}=\lambda_{[\phi]ij}F^s_{a,j},\quad a_{[B]ij}=a_{ij}\left(1-\delta_{iB}\right) + \delta_{iB},\quad \lambda_{[\phi]ij}=\lambda_{ij}\left(1-\delta_{iB}\right) + \delta_{iB}G_{[\phi]ij},\quad B\in\{k\mid\bm{x}_k\in\partial\Omega\}.
 \end{equation}
+For the second potential equation, only the source term and the boundary conditions change, and we find
+\begin{equation}
+a_{[B]ij}\Psi^s_{a,j}=\lambda_{[\psi]ij}F^s_{a,j},\quad \lambda_{[\psi]ij}=\lambda_{ik}a_{[B]k\ell}^{-1}\lambda_{[\phi]\ell j}(1-\delta_{iB})+\delta_{iB}G_{[\psi]ij}.
+\end{equation}
+
+Having solved the potential equations in terms of the degrees-of-freedom for the distribution function, we then turn our attention to the kinetic equation.
 
 %Fortunately, there is a simple recipe for solving these kind of problems, namely the Banach or Picard-Lindel\"of iteration. One starts with some function $\tilde{F}$, uses that to compute approximations for the potential functions, and solves the weak problem for $F^s$ with simple matrix inversion. Then this solution is used to compute new values for the potentials, and an iterative method is ready. For our particular case this is expected to work reasonably well because the distribution is not expected to change radically due to collisions from one time point to the next. And since we have an initial state for the distribution function, our guess for the potentials is typically close to the correct expression. It is not uncommon at all to actually use only the first iteration, in which case the backward time differentiation results in an equation which can be solved with one matrix solve. Nevertheless, more sophisticated approaches also exist.
 
