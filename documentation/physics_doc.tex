@@ -63,7 +63,11 @@
 \date{\today}
 
 \begin{abstract}
-In these notes we take a simplified look at the kinetic processes that cause the plasma to cool down during thermal quench. We will assume two different mechanisms: (1) injection of cold particles, e.g., with pellets or neutral gas, (2) loss of particles due to plasma touching the wall. Simple models are used to simulate both these phenomena from the first principles, admitting efficient scans over wide parameter range. The simulations are then used to answer how many seed runaway electrons can be expected during thermal quench.
+In order to model the thermal quench and the electron distribution function from the first principles, predescribed temporal profiles for the temperature evolution should be abandoned and the related physics included in the kinetic equation. If we are not interested on the current quench, the plasma current can be assumed constant in time admitting a closed set of equations for self-consistent description of the thermal quench. Our model will only investigate the momentum space dynamics, assuming constant profiles accross the plasma and also assumes the plasma to be a straight cylinder. With these approximations, the system of equations becomes simple enough to solve, so that scans over different kinetic mechanisms can be efficiently conducted. 
+
+The model we propose includes nonlinear description for the electron-electron collision, linear treatment of electron-ion collisions, and linear source and sink terms. The accelerating electric field is computed from the condition that the plasma current density remains constant. The concept of plasma conductivity is not needed, since the electron-electron collisions are treated nonlinearly and the collisions with ions are included in the model. The spitzer response is thus automatically included.
+
+Since the distribution function is assumed to be elongated along the direction of the electric, especially if the electric exceeds the so-called critical field for runaway generation, we discretize our equations with Finite-Element formulation. This allows efficient use of unstructurized meshes.
 \end{abstract}
 
 %\pacs{put Pacs here}
@@ -74,7 +78,7 @@ In these notes we take a simplified look at the kinetic processes that cause the
 \section{Model equations}
 We assume the plasma to consist of species $a$, the one we follow from kinetic principles, and of possibly multiple other species $b$ which are assumed to be Maxwellian. The distribution function of species $a$ is assumed to be affected by electric field, Coulomb collisions, by different source and sink terms, e.g., source of cold electrons from ionization of neutrals, or sink of particles mimicking the loss of plasma confinement. The kinetic model for the distribution function of species $a$ is thus described by 
 \begin{equation}
-\frac{\partial f_a}{\partial t} + \frac{e_a\bm{E}}{m_a}\cdot\frac{\partial f_a}{\partial\bm{v}}= C_{aa}[f_a,f_a]+C_{ab}[f_a,f_b]+s,
+\frac{\partial f_a}{\partial t} + \frac{e_a\bm{E}}{m_a}\cdot\frac{\partial f_a}{\partial\bm{v}}= C_{aa}[f_a,f_a]+C_{ab}[f_a,f_b]+L[f_a]+s,
 \end{equation}
 where the Fokker-Planck collision operator for collisions between species $a$ and $b$ is 
 \begin{equation}
@@ -84,15 +88,21 @@ and the Rosenbluth potentials are
 \begin{equation}
 \phi(\bm{v})=-\frac{1}{4\pi}\int f(\bm{v}')\frac{1}{\mid \bm{v}-\bm{v}'\mid}d\bm{v}',\qquad \psi(\bm{v})=-\frac{1}{8\pi}\int f(\bm{v}')\mid \bm{v}-\bm{v}'\mid d\bm{v}',
 \end{equation}
-The source $s$ is assumed to be at most linear in $f_a$. 
-
-But before we proceed any further, it is good to start working with dimensionless quantities. We define $\bm{x}=\bm{v}/v_0$, where $v_0$ is a fixed reference velocity. Thus the volume element becomes $d\bm{v}=v_0^3d\bm{x}$ and any velocity space moment becomes $\int \bm{v}^n fd\bm{v}=v_0^{3+n}\int \bm{x}^nf d\bm{x}$. We also normalize the distribution function and define $F=v_0^3f/n_0$ so that any physical velocity space moment is given by $\int \bm{v}^n fd\bm{v}=n_0v_0^{n}\int \bm{x}^nF d\bm{x}$. In addition, we define normalized time $\tau=t/t_0$ where $t_0$ is a fixed reference time scale. The fixed quantities are used to allow efficient implementation of time-depending sources. The kinetic equation for the normalized distribution function $F_a$ then becomes
+The operator $L[f_a]$ is assumed be a general linear operator with respect to $f_a$. The source $s$ is assumed to be independent of $f_a$. The kinetic equation is coupled to current conservation equation
 \begin{equation}
-\frac{\partial F_a}{\partial\tau}-\bar{\bm{E}}\cdot\nabla F_a\\=\nu_{aa} C[F_a,F_a]+\nu_{ab} C[F_a,F_b]+S
+\bm{E}\cdot\int \bm{v}\frac{\partial f_a}{\partial t}d\bm{v}=0,
 \end{equation}
+which then closes our equations. The unknowns in our implicit system are the amplitude of the electric field, $E$, and the distribution function $f_a$. Only the magnitude of the electric field is needed, since the distribution has axial symmetry along the direction of the electric field.
+
+\subsection{Normalized equations}
+Before we proceed any further, it is good practise to swith to dimensionless quantities. We define $\bm{x}=\bm{v}/v_0$, where $v_0$ is a fixed reference velocity. Thus the volume element becomes $d\bm{v}=v_0^3d\bm{x}$ and any velocity space moment becomes $\int \bm{v}^n fd\bm{v}=v_0^{3+n}\int \bm{x}^nf d\bm{x}$. We also normalize the distribution function and define $F=v_0^3f/n_0$ so that any physical velocity space moment is given by $\int \bm{v}^n fd\bm{v}=n_0v_0^{n}\int \bm{x}^nF d\bm{x}$. In addition, we define normalized time $\tau=t/t_0$ where $t_0$ is a fixed reference time scale. Our equations in the normalized quantities are thus
+\begin{align}
+&\frac{\partial F_a}{\partial\tau}+\bar{\bm{E}}\cdot\nabla F_a-\nu_{aa} C[F_a,F_a]-\nu_{ab} C[F_a,F_b]-t_0L[F_a]-S=0,\\
+&\bar{\bm{E}}\cdot\int\bm{x}\frac{\partial F_a}{\partial\tau}d\bm{x}=0
+\end{align}
 where the normalized dimensionless quantities are
 \begin{equation}
-\bar{\bm{E}}=\frac{t_0e}{mv_0}\bm{E},\qquad \nu_{ab}=\left(\frac{t_0n_0e_a^2e_b^2\ln\Lambda_{ab}}{v_0^3m_a^2\varepsilon_0^2}\right),\qquad S=\frac{v_0^3t_0}{n_0}s.
+\bar{\bm{E}}=\frac{t_0e_a}{mv_0}\bm{E},\qquad \nu_{ab}=\left(\frac{t_0n_0e_a^2e_b^2\ln\Lambda_{ab}}{v_0^3m_a^2\varepsilon_0^2}\right),\qquad S=\frac{v_0^3t_0}{n_0}s.
 \end{equation}
 The collision operator in the equation is then written simply
 \begin{equation}
@@ -104,16 +114,17 @@ and the Rosenbluth potentials become
 \end{equation}
 and satisfy the Poisson equations $\nabla^2\Phi = F$ and $\nabla^2\Psi =\Phi$.
 
-
 \section{Weak formulation with backward Euler step}
-Because the kinetic equation is stiff, the time discretization should be done by backward differentiation. We will use backward Euler, approximating the time derivative of distribution function at time instance $s$ with the expression $\partial F^{s}/\partial\tau\approx (F^{s}-F^{s-1})/\Delta \tau$. Further, because we cannot handle infinite domains, the space must be truncated. With that in mind, we multiply the kinetic equation with a test function $F^{\star}$ and integrate over the computational domain $\Omega$:
+Because the kinetic equation is stiff, the time discretization should be done by backward differentiation. We will use backward Euler, approximating the time derivative of the distribution function at time instance $s$ with the expression $\partial F^{s}/\partial\tau\approx (F^{s}-F^{s-1})/\delta \tau$. Further, because we cannot handle infinite domains, the space must be truncated. This requires careful treatment of the Poisson equations, and boundary conditions computed from the Green's function solution.
+
+ With that in mind, we multiply the kinetic equation with a test function $F^{\star}$ and integrate over the computational domain $\Omega$:
 \begin{multline}
-\int_{\Omega}F^{\star}\left(F_a^s -\Delta\tau S^s-\Delta\tau\bar{\bm{E}}\cdot\nabla F_a^s\right)d\bm{x}
-+\sum_b\nu_{ab}\Delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\frac{m_a}{m_b}\nabla \Phi_b^s F_a^s-\nabla\nabla\Psi^s\cdot\nabla F^s\right)d\bm{x}\\
--\sum_b\nu_{ab}\Delta\tau\int_{\partial\Omega}F^{\star}\left(F_a^s\frac{m_a}{m_b}\nabla\Phi_b^s-\nabla F_a^s\cdot\nabla\nabla\Psi_b^s\right)\cdot d\bm{\sigma}
+\int_{\Omega}F^{\star}\left(F_a^s -\delta\tau S^s+\delta\tau\bar{\bm{E}}\cdot\nabla F_a^s+\delta\tau t_0L[F_a^s]\right)d\bm{x}
++\sum_b\nu_{ab}\delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\frac{m_a}{m_b}\nabla \Phi_b^s F_a^s-\nabla\nabla\Psi^s\cdot\nabla F^s\right)d\bm{x}\\
+-\sum_b\nu_{ab}\delta\tau\int_{\partial\Omega}F^{\star}\left(F_a^s\frac{m_a}{m_b}\nabla\Phi_b^s-\nabla F_a^s\cdot\nabla\nabla\Psi_b^s\right)\cdot d\bm{\sigma}
 =\int_{\Omega}F^{\star}F^{s-1}d\bm{x}.
 \end{multline}
-Since the distributions $F_b$ are assumed given, we consider the Poisson equations only for the species $a$, the:
+Since the distributions $F_b$ are assumed given, we consider the Poisson equations only for the species $a$:
 \begin{align}
 -\int_{\Omega}\nabla\Phi_a^s\cdot\nabla\Phi^{\star}d\bm{x}+\int_{\partial\Omega}\Phi^{\star}\nabla\Phi_a^s\cdot d\bm{\sigma}&=\int_{\Omega}F_a^s\Phi^{\star}d\bm{x}\\
 -\int_{\Omega}\nabla\Psi_a^s\cdot\nabla\Psi^{\star}d\bm{x}+\int_{\partial\Omega}\Psi^{\star}\nabla\Psi_a^s\cdot d\bm{\sigma}&=\int_{\Omega}\Phi_a^s\Psi^{\star}d\bm{x}.
@@ -130,45 +141,32 @@ and for the second potential we have similarly
 &-\int_{\Omega}\nabla\Psi_a^s\cdot\nabla\Psi^{\star}d\bm{x}=\int_{\Omega}\Phi_a^s\Psi^{\star}d\bm{x}, \quad \bm{x}\in\Omega, \quad \forall \Psi^{\star}\in V\\
 &\Psi_a^s(\bm{x})=-\frac{1}{8\pi}\int F_a^s(\bm{y})\mid \bm{x}-\bm{y}\mid d\bm{y}, \quad \bm{x}\in\partial\Omega.
 \end{align}
-Assuming the distribution function and its gradient to vanish at the boundary, the equation for $F_a^s$ becomes
+Since we are not imposing Neumann conditions on $F^s_a$, only the Dirichlet condition, the boundary integral term vanishes in the equation for $F_a$, and the weak formulation becomes
 \begin{multline}
-\int_{\Omega}F^{\star}\left(F_a^s -\Delta\tau S^s-\Delta\tau\bar{\bm{E}}\cdot\nabla F^s\right)d\bm{x}
-+\sum_b\nu_{ab}\Delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\frac{m_a}{m_b}\nabla \Phi_b^s F_a^s-\nabla\nabla\Psi_b^s\cdot\nabla F_a^s\right)d\bm{x}\\
+\int_{\Omega}F^{\star}\left(F_a^s -\delta\tau S^s-\delta\tau\bar{\bm{E}}\cdot\nabla F^s+\delta\tau t_0L[F_a^s]\right)d\bm{x}
++\sum_b\nu_{ab}\delta\tau\int_{\Omega}\nabla F^{\star}\cdot\left(\frac{m_a}{m_b}\nabla \Phi_b^s F_a^s-\nabla\nabla\Psi_b^s\cdot\nabla F_a^s\right)d\bm{x}\\
 =\int_{\Omega}F^{\star}F_a^{s-1}d\bm{x}, \quad \bm{x}\in\Omega, \quad \forall F^{\star}\in V.
 \end{multline}
 
-% For a general set of curvilinear coordinates $x^{i}(x^1,x^2,x^3)$ with a metric tensor $g_{ij}$, the collision operator can be conveniently expressed as 
-% \begin{equation}
-% C=\sqrt{g}^{-1}\partial_i\left[\sqrt{g}K^if-\sqrt{g}D^{ij}\partial_jf\right],
-% \end{equation}
-% where the covariant components of the friction and diffusion terms are
-% \begin{equation}
-% K^i=\e^{i}\cdot \nabla\Phi = g^{ij}\partial_j\Phi,\qquad D^{ij}=\e^i\cdot\nabla\nabla\Psi\cdot\e^j=g^{ik}g^{j\ell}\left(\partial^2_{k\ell}\Psi-\Gamma^m_{k\ell}\partial_m \Psi\right).
-% \end{equation}
-% and $\Gamma^i_{jk}=\partial_k \e_j\cdot\e^i=g^{i\ell}\left(\partial_k g_{\ell j}+\partial_j g_{\ell k}-\partial_{\ell} g_{jk}\right)/2$ is the Christoffel symbol of the second kind.
+The only complication in our system is the nonlinearity: because the potential functions depend on $F^s_a$, the weak formulation for $F^s_a$ is not linear. In order to express the kinetic equation completely in terms of the distribution function only, we have to switch to the finite-element presentation, solve the potentials in terms of the degrees of freedom of $F^s_a$, and put the expressions back into the weak form for the kinetic equation. In the end, we will end up with a bilinear form for the degrees-of-freedom for $F_a^s$, which is then solved with Newton's method which has a quadratic convergence rate.
 
-% In our case, the distribution function will have symmetry along the axis of the electric field, and natural choice of coordinates being either spherical or cylindrical. It is thus usefull to express the weak forms directly in curvilinear coordinates and we get:
-% \begin{itemize}
-% \item[1.] Weak formulation for the distribution function: 
-% $F^s(\partial\Omega)=0$.
-% \begin{multline}
-% \int_{\Omega}F^{\star}\left(F^s -\Delta\tau S^s-\Delta\tau\bar{E}^i\partial_i F^s\right)\sqrt{g}dx^1dx^2dx^3\\
-% +\nu\Delta\tau\int_{\Omega}\partial_iF^{\star}\left[g^{ij}\partial_j\Phi^s F^s-g^{ik}g^{j\ell}\left(\partial^2_{k\ell}\Psi^s-\Gamma^m_{k\ell}\partial_m \Psi^s\right)\partial_j F^s\right]\sqrt{g}dx^1dx^2dx^3\\
-% =\int_{\Omega}F^{\star}F^{s-1}\sqrt{g}dx^1dx^2dx^3, \quad \bm{x}\in\Omega, \quad \forall F^{\star}\in V,
-% \end{multline}
-% \item[2.] Weak formulation for the first Rosenbluth potential:
-% \begin{align}
-% -\int_{\Omega}\partial_i\Phi^sg^{ij}\partial_j\Phi^{\star}\sqrt{g}dx^1dx^2dx^3&=\int_{\Omega}F^s\Phi^{\star}\sqrt{g}dx^1dx^2dx^3, \quad \bm{x}\in\Omega, \quad \forall \Phi^{\star}\in V\\
-% \Phi^s(\bm{x})&=-\frac{1}{4\pi}\int \frac{F^s(\bm{y})}{\mid \bm{x}-\bm{y}\mid}\sqrt{g}dy^1dy^2dy^3, \quad \bm{x}\in\partial\Omega,
-% \end{align}
-% \item[3.] Weak formulation for the second Rosenbluth potential:
-% \begin{align}
-% -\int_{\Omega}\partial_i\Psi^s g^{ij}\partial_j\Psi^{\star}\sqrt{g}dx^1dx^2dx^3&=\int_{\Omega}\Phi^s\Psi^{\star}\sqrt{g}dx^1dx^2dx^3, \quad \bm{x}\in\Omega, \quad \forall \Psi^{\star}\in V\\
-% \Psi^s(\bm{x})&=-\frac{1}{8\pi}\int F^s(\bm{y})\mid \bm{x}-\bm{y}\mid \sqrt{g}dy^1dy^2dy^3, \quad \bm{x}\in\partial\Omega.
-% \end{align}
-% \end{itemize}
+\subsection{Degrees-of-freedom representation}
+We choose our finite-element space to be a set of functions $\{\lambda_i(\bm{x})\}_{i=1}^{N}$, and we assume the mesh given. Then we approximate the distribution function to be of the form $F^s_a(\bm{x})=F^s_{a,i}\lambda_i(\bm{x})$. If we now compute the Green's function solutions for the potential, we find
+\begin{align}
+&\Phi_a^s(\bm{x}_i)=-\frac{1}{4\pi}\int \frac{\lambda_j(\bm{y})}{\mid \bm{x}_i-\bm{y}\mid}d\bm{y}F_{a,j}^s\equiv G^{[\phi]}_{ij}F_{a,j}^s, \quad \bm{x}_i\in\partial\Omega,\\
+&\Psi_a^s(\bm{x}_i)=-\frac{1}{8\pi}\int \lambda_j(\bm{y})\mid \bm{x}_i-\bm{y}\mid d\bm{y}F_{a,j}^s\equiv G^{[\psi]}_{ij}F_{a,j}^s, \quad \bm{x}_i\in\partial\Omega.
+\end{align}
 
-The only complication in our system is the nonlinearity: because the potential functions depend on $F^s$, the weak formulation for $F^s$ is not linear. Fortunately, there is a simple recipe for solving these kind of problems, namely the Banach or Picard-Lindel\"of iteration. One starts with some function $\tilde{F}$, uses that to compute approximations for the potential functions, and solves the weak problem for $F^s$ with simple matrix inversion. Then this solution is used to compute new values for the potentials, and an iterative method is ready. For our particular case this is expected to work reasonably well because the distribution is not expected to change radically due to collisions from one time point to the next. And since we have an initial state for the distribution function, our guess for the potentials is typically close to the correct expression. It is not uncommon at all to actually use only the first iteration, in which case the backward time differentiation results in an equation which can be solved with one matrix solve. Nevertheless, more sophisticated approaches also exist.
+On the other hand, in order to solve the Poisson equations, the potentials must also be expressed as approximations belonging into the finite-element space, i.e., $\Psi^s_a(\bm{x})=\Psi^s_{a,i}\lambda_i(\bm{x})$ and $\Phi^s_a(\bm{x})=\Phi^s_{a,i}\lambda_i(\bm{x})$. Let's first inspect the equation for the potential $\Phi^s_a$. A straight-forward evaluation of the weak formulation gives us
+\begin{equation}
+a_{ij}\Phi^s_{a,j}=\lambda_{ij}F^s_{a,j},\qquad a_{ij}=-\int_\Omega\nabla\lambda_i\cdot\nabla\lambda_jd\bm{x},\qquad \lambda_{ij}=\int_\Omega\lambda_i\lambda_jd\bm{x}.
+\end{equation}
+Since the basis functions $\lambda_i(\bm{x})$ are designed in a way that they get the value $1$ at the point $\bm{x}_i$ and are supported only by those mesh elements that have $\bm{x}_i$ as one of the vertices, and are zero outside the region of support, we have to modify the matrix $a_{ij}$ and $\lambda_{ij}$ a bit, and our final equations for the first potential become
+\begin{equation}
+a_{ij}^{[\phi]}\Phi^s_{a,j}=\lambda^{[\phi]}_{ij}F^s_{a,j},\qquad a^{[\phi]}_{ij}=\lambda_{ij}\left(1-\delta_{iB}\right) + \delta_{iB},\qquad \lambda_{ij}=\int_\Omega\lambda_i\lambda_jd\bm{x}.
+\end{equation}
+
+%Fortunately, there is a simple recipe for solving these kind of problems, namely the Banach or Picard-Lindel\"of iteration. One starts with some function $\tilde{F}$, uses that to compute approximations for the potential functions, and solves the weak problem for $F^s$ with simple matrix inversion. Then this solution is used to compute new values for the potentials, and an iterative method is ready. For our particular case this is expected to work reasonably well because the distribution is not expected to change radically due to collisions from one time point to the next. And since we have an initial state for the distribution function, our guess for the potentials is typically close to the correct expression. It is not uncommon at all to actually use only the first iteration, in which case the backward time differentiation results in an equation which can be solved with one matrix solve. Nevertheless, more sophisticated approaches also exist.
 
 \section{Spherically symmetric cooling down}
 The most simple model for the cooling-down process is to assume a zero electric field and a spherically symmetric source of cold particles which drives equilibration of the temperature. The whole kinetic equation will be spherically symmetric, and the weak formulations become quite compact. 
