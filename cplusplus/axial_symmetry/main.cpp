@@ -1,10 +1,14 @@
+
 #include <dolfin.h>
 #include "Forms.h"
 #include "BCassembler.h"
 #include "KphiRZ.h"
 #include "KpsiRZ.h"
 #include "Source.h"
+#include "GSource.h"
 #include "Inistate.h"
+#include "Phiistate.h"
+#include "Psiistate.h"
 #include "Jacobian.h"
 
 using namespace dolfin;
@@ -34,11 +38,17 @@ int main()
   Function f(V); // the distribution function
   Function fprev(V); // the distribution function at previous time instance
   Function phi(V); // the first rosenbluth potential
+  Function phii(V); // the first rosenbluth potential ions
   Function psi(V); // the second rosenbluth potential
-  Source s; // the user specified source/sink
+  Function psii(V); // the second rosenbluth potential ions
+  Function g(V); // the parallel dependent sink function on the grid
+  GSource gs; // the parallel dependent expression
+  Source s; // the user specified source/sink expression
   KphiRZ Kphi; // Green's function for phi
   KpsiRZ Kpsi; // Green's function for psi
   Jacobian Jac; // Jacobian for the space 
+  Psiistate psii_state; // the user-specified ion psi state
+  Phiistate phii_state; // the user-specified ion phi state
   Inistate initial_state; // the user-specified initial state
     
   // ---------------------------------------------------------------
@@ -47,7 +57,9 @@ int main()
 
   Constant Efield(0.0); // the normalized electric field
   Constant nu(1.0); // the normalized collision frequency
+  Constant nui(1.0); // the normalized collision frequency ions = nu*Zeff^2
   Constant dtau(1.0); // the normalized time step
+  Constant mu(2.72443712e-04); // the electron to ion mass ratio 9.1093898e-31/3.3435860e-27
   Constant zero(0.0); // Constant to be used as the boundary condition for the kinetic equation
 
   // ---------------------------------------------------------------
@@ -55,11 +67,9 @@ int main()
   // ---------------------------------------------------------------
     
   Forms::Form_aLaplace a_laplace(V, V);// bilinear volume form for the laplace operator
-  Forms::Form_aProjection a_initial_projection(V, V); // bilinear volume form for the projection
   Forms::Form_aKinetic a_kinetic(V, V);// bilinear form for the time discrete kinetic equation
   Forms::Form_LProjection L_phi(V); // linear form for the Poisson equation for phi
   Forms::Form_LProjection L_psi(V); // linear form for the Poisson equation for psi
-  Forms::Form_LProjection L_initial_projection(V); // linear form for the projection
   Forms::Form_LKinetic L_kinetic(V); // linear form for the time discrete kinetic equation
   Forms::Form_weightedIntegral phi_form(mesh,fprev,Kphi,Jac); // form for computing phi directly
   Forms::Form_weightedIntegral psi_form(mesh,fprev,Kpsi,Jac); // form for computing psi directly
@@ -72,28 +82,29 @@ int main()
   // ---------------------------------------------------------------
 
   a_laplace.J = Jac;
-  a_initial_projection.J = Jac;
   a_kinetic.J = Jac;
   
   a_kinetic.phi = phi;
   a_kinetic.psi = psi;
+  a_kinetic.phii = phii;
+  a_kinetic.psii = psii;
   a_kinetic.dtau = dtau;
   a_kinetic.E = Efield;
   a_kinetic.nu = nu;
+  a_kinetic.nui = nui;
+  a_kinetic.mu = mu;
+  a_kinetic.g = g;
   
   L_kinetic.J = Jac;
   L_kinetic.dtau = dtau;
   L_kinetic.S = s;
   L_kinetic.f = fprev;
   
-  L_phi.J = Jac;
+  L_phi.J = Jac; 
   L_psi.J = Jac;
   L_phi.f = fprev; 
   L_psi.f = phi;
   
-  L_initial_projection.J = Jac;
-  L_initial_projection.f = initial_state;
-    
   // ---------------------------------------------------------------------
   // Assign the greens function solutions to the potential equations
   // ---------------------------------------------------------------------
@@ -109,18 +120,53 @@ int main()
   DirichletBC boundary_condition_f (V, zero , boundaries, 1);
 
   // ---------------------------------------------------------------------
+  // Set initial ion potentials
+  // ---------------------------------------------------------------------
+  phii_state.phimax=1.0;
+  psii_state.psimax=1.0;
+  phii_state.gamma_phi=0.3;
+  psii_state.gamma_psi=0.3;
+  phii_state.compute_coeffs();
+  psii_state.compute_coeffs();
+  phii.interpolate(phii_state); 
+  psii.interpolate(psii_state); 
+
+  // ---------------------------------------------------------------------
+  // Set up solution independent source
+  // ---------------------------------------------------------------------
+  s.gamma_src=0.3;
+  s.srcmax=0.0;
+  s.compute_coeffs();
+
+  // ---------------------------------------------------------------------
+  // Set up solution dependent source
+  // ---------------------------------------------------------------------
+  gs.gamma_g=0.3;
+  gs.gmax=0.1;
+  gs.compute_coeffs();
+  g.interpolate(gs);
+
+  // ---------------------------------------------------------------------
   // Project the initial state to the finite element space and take a copy
   // ---------------------------------------------------------------------
-  solve( a_initial_projection == L_initial_projection, f, boundary_condition_f);
+  f.interpolate(initial_state);
   fprev=f;
 
   // ---------------------------------------------------------------------
   // Set up a file for storing the solution (for creating a movie with paraview)
+  // The rename calls ensure the variables are named correctly in the files.
   // ---------------------------------------------------------------------
 
   File file_f("f.pvd");
   File file_phi("phi.pvd");
+  File file_phii("phii.pvd");
   File file_psi("psi.pvd");
+  File file_psii("psii.pvd");
+  f.rename("f","f");
+  phi.rename("phi","phi"); 
+  psi.rename("psi","psi");
+  phii.rename("phi","phi");
+  psii.rename("psi","psi");
 
   // ---------------------------------------------------------------------
   // Loop over time, this should be extremely simple now because all 
@@ -134,14 +180,41 @@ int main()
   double t(0.0);
   int nt(40);
   for (int it = 1; it <= nt; it++) {
-    
+
+    std::cout<<"time step: "<<it<<"/"<<nt<<" time: "<<t<<std::endl;
+
     // ---------------------------------------------------------------------
-    // On the fly plotter for simple studies, use paraview to generate 
+    // On the fly plotting for simple studies, use paraview to generate 
     // movies.
     // ---------------------------------------------------------------------
+    plot(f,std::string("distribution function f"));
+    //plot(g,std::string("sink function operator"));
+    //plot(phii,std::string("phii_state"));
+    //plot(psii,std::string("psii_state"));
+    //interactive();
 
-    std::cout<<"time step: "<<it<<"/"<<nt<<std::endl;
-    //plot(f,std::string("distribution function f"));
+    // ---------------------------------------------------------------------
+    // Set ion potentials
+    // ---------------------------------------------------------------------
+    phii_state.t=t;
+    psii_state.t=t;
+    phii_state.compute_coeffs();
+    psii_state.compute_coeffs();
+    phii.interpolate(phii_state); 
+    psii.interpolate(psii_state); 
+  
+    // ---------------------------------------------------------------------
+    // Set the solution independent source
+    // ---------------------------------------------------------------------
+    s.t=t;
+    s.compute_coeffs();
+  
+    // ---------------------------------------------------------------------
+    // Set the solution dependent source
+    // ---------------------------------------------------------------------
+    gs.t=t;
+    gs.compute_coeffs();
+    g.interpolate(gs);
 
     // ---------------------------------------------------------------------
     // Solve for the potential functions
@@ -161,17 +234,23 @@ int main()
     // ---------------------------------------------------------------------
 
     fprev=f; // Check that this doesn't cause memory leaks!!!
+    
+    // ---------------------------------------------------------------------
+    // Advance the time
+    // ---------------------------------------------------------------------
+
+    t= t+dtau;
 
     // ---------------------------------------------------------------------
-    // Write time stamps of f, phi, and psi to separate files.
+    // Write time stamps of f, phi, psi etc. to separate files.  The 
+    // rename calls ensure the variables are named correctly in the files.
     // ---------------------------------------------------------------------
-    t= t+it*dtau;
-    f.rename("f","f");
-    phi.rename("phi","phi");
-    psi.rename("psi","psi");
+
     file_f << f, t;
     file_phi << phi, t;
     file_psi << psi, t;    
+    file_phii << phii, t;
+    file_psii << psii, t;    
 	
   }
   swatch.stop();

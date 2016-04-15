@@ -13,22 +13,29 @@ k = Coefficient(element) # Green's function
 J = Coefficient(element) # Jacobian
 phi = Coefficient(element) # first Rosenbluth potential
 psi = Coefficient(element) # second Rosenbluth potential
+phii = Coefficient(element) # first Rosenbluth potential ions
+psii = Coefficient(element) # second Rosenbluth potential ions
 S = Coefficient(element) # the source/sink independent of solution
+g = Coefficient(element) # the source/sink dependent on v_{||}
 
 # parameters
 dtau = Constant(triangle) 
 E = Constant(triangle)
-nu = Constant(triangle)
-
+nu = Constant(triangle) # electron nu
+nui = Constant(triangle) # ion nu
+mu = Constant(triangle) # electron to ion mass ratio
 
 # Bilinear forms:
 # "aLaplace" for the potential equations.
 # "aKinetic" for advancing the distribution function in time with the implicit Euler step. 
 # "aProjection" for projecting into finite element space
 aLaplace = -(u.dx(0)*v.dx(0)+u.dx(1)*v.dx(1))*J*dx 
-aKinetic = (u*v - dtau*E*v*u.dx(1) + dtau*nu*((v.dx(0)*phi.dx(0)+v.dx(1)*phi.dx(1))*u - v.dx(0)*psi.dx(0).dx(0)*u.dx(0)-psi.dx(0).dx(1)*(u.dx(0)*v.dx(1)+u.dx(1)*v.dx(0))-v.dx(1)*psi.dx(1).dx(1)*u.dx(1)) )*J*dx
-aProjection = inner(u,v)*J*dx
 
+#aKinetic = (u*v - dtau*E*v*u.dx(1) + dtau*nu*((v.dx(0)*phi.dx(0)+v.dx(1)*phi.dx(1))*u - v.dx(0)*psi.dx(0).dx(0)*u.dx(0)-psi.dx(0).dx(1)*(u.dx(0)*v.dx(1)+u.dx(1)*v.dx(0))-v.dx(1)*psi.dx(1).dx(1)*u.dx(1)) )*J*dx
+
+aKinetic = (u*v - dtau*g*u*v - dtau*E*v*u.dx(1) + dtau*nu*((v.dx(0)*phi.dx(0)+v.dx(1)*phi.dx(1))*u - v.dx(0)*psi.dx(0).dx(0)*u.dx(0)-psi.dx(0).dx(1)*(u.dx(0)*v.dx(1)+u.dx(1)*v.dx(0))-v.dx(1)*psi.dx(1).dx(1)*u.dx(1)) + dtau*nui*(mu*(v.dx(0)*phii.dx(0)+v.dx(1)*phii.dx(1))*u - v.dx(0)*psii.dx(0).dx(0)*u.dx(0)-psii.dx(0).dx(1)*(u.dx(0)*v.dx(1)+u.dx(1)*v.dx(0))-v.dx(1)*psii.dx(1).dx(1)*u.dx(1)) )*J*dx
+
+aProjection = inner(u,v)*J*dx
 
 # Linear forms:
 # "LProjection" for projection and also for the potential equations
@@ -41,6 +48,5 @@ LKinetic = v*(f + dtau*S)*J*dx
 # Green's function solution in the Poisson equations.
 weightedIntegral = f*k*J*dx
 
-
-
 forms = [aLaplace,aKinetic,aProjection,LProjection,LKinetic,weightedIntegral]
+
