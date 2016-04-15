@@ -10,6 +10,7 @@
 #include "Phiistate.h"
 #include "Psiistate.h"
 #include "Jacobian.h"
+#include "Vparallel.h"
 
 using namespace dolfin;
 
@@ -46,6 +47,7 @@ int main()
   Source s; // the user specified source/sink expression
   KphiRZ Kphi; // Green's function for phi
   KpsiRZ Kpsi; // Green's function for psi
+  Vparallel Vpar; // "function" for assembling the plasma current form
   Jacobian Jac; // Jacobian for the space 
   Psiistate psii_state; // the user-specified ion psi state
   Phiistate phii_state; // the user-specified ion phi state
@@ -55,7 +57,7 @@ int main()
   // Define the parameters for the kinetic equation
   // ---------------------------------------------------------------
 
-  Constant Efield(0.0); // the normalized electric field
+  Constant Efield(0.1); // the normalized electric field
   Constant nu(1.0); // the normalized collision frequency
   Constant nui(1.0); // the normalized collision frequency ions = nu*Zeff^2
   Constant dtau(1.0); // the normalized time step
@@ -73,6 +75,7 @@ int main()
   Forms::Form_LKinetic L_kinetic(V); // linear form for the time discrete kinetic equation
   Forms::Form_weightedIntegral phi_form(mesh,fprev,Kphi,Jac); // form for computing phi directly
   Forms::Form_weightedIntegral psi_form(mesh,fprev,Kpsi,Jac); // form for computing psi directly
+  Forms::Form_weightedIntegral current_form(mesh,fprev,Vpar,Jac); // form for computing psi directly
 
   // ---------------------------------------------------------------
   // Assign the functions and parameters for bilinear and linear 
@@ -105,6 +108,10 @@ int main()
   L_phi.f = fprev; 
   L_psi.f = phi;
   
+  current_form.f=fprev;
+  current_form.k=Vpar;
+  current_form.J=Jac;
+
   // ---------------------------------------------------------------------
   // Assign the greens function solutions to the potential equations
   // ---------------------------------------------------------------------
@@ -178,10 +185,11 @@ int main()
   swatch = Timer("Time loop and problem solving");
   
   double t(0.0);
+  double jpar(0.0);
   int nt(40);
   for (int it = 1; it <= nt; it++) {
 
-    std::cout<<"time step: "<<it<<"/"<<nt<<" time: "<<t<<std::endl;
+    std::cout<<"time step: "<<it<<"/"<<nt<<" time: "<<t<< " jpar: "<<jpar<<std::endl;
 
     // ---------------------------------------------------------------------
     // On the fly plotting for simple studies, use paraview to generate 
@@ -238,6 +246,8 @@ int main()
     // ---------------------------------------------------------------------
     // Advance the time
     // ---------------------------------------------------------------------
+    jpar=assemble(current_form);
+
 
     t= t+dtau;
 
