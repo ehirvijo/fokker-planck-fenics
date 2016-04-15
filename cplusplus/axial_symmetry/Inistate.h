@@ -1,6 +1,3 @@
-// Copyright (C) 2016 Hirvijoki-Pfefferle
-//
-// This file is part of Fokker-Planck-Fenics
 
 #ifndef __ISTATE_H
 #define __ISTATE_H

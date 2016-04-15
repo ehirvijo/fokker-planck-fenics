@@ -1,6 +1,3 @@
-// Copyright (C) 2016 Hirvijoki-Pfefferle
-//
-// This file is part of Fokker-Planck-Fenics
 
 #ifndef __KPSIRZ_H
 #define __KPSIRZ_H

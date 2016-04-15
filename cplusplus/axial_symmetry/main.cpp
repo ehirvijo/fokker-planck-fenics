@@ -1,4 +1,4 @@
-
+// 2016 Hirvijoki-Pfefferle-Brennan Princeton Plasma Physics Lab
 #include <dolfin.h>
 #include "Forms.h"
 #include "BCassembler.h"
