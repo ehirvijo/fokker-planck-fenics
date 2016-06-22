@@ -114,6 +114,35 @@ and the Rosenbluth potentials become
 \end{equation}
 and satisfy the Poisson equations $\nabla^2\Phi = F$ and $\nabla^2\Psi =\Phi$.
 
+\subsection{Normalized potential functions for the background species}
+We assume the background species $b$ to be Maxwellian so that the distribution function is given by
+\begin{equation}
+f_b(\bm{v},t)=n_b(t)\left(\frac{m_b}{2\pi T_b(t)}\right)^{3/2}\exp\left(-\frac{m_bv^2}{2T_b(t)}\right).
+\end{equation}
+The normalized background distribution function $F_b=v_0^3f_b/n_0$ is then given by
+\begin{equation}
+F_b(\bm{x},t)=\frac{n_b}{n_0}\frac{\alpha_b^3}{\pi^{3/2}}\exp\left(-\alpha_b^2x^2\right),
+\end{equation}
+where we have defined the dimensionless quantity $\alpha_b(t)=\sqrt{m_bv_0^2/(2 T_b(t))}$. Now we can directly compute the dimensionless potential functions. For the first potential, we find
+\begin{align}
+\begin{split}
+\Phi_b(\bm{x},t)&=-\frac{n_b}{n_0}\frac{\alpha_b^3}{\pi^{3/2}}\frac{1}{4\pi}\int \frac{\exp\left(-\alpha_b^2y^2\right)}{\mid \bm{x}-\bm{y}\mid}d\bm{y}\\
+&=-\frac{n_b}{n_0}\frac{\alpha_b^3}{\pi^{3/2}}\frac{1}{2}\int_{0}^{\infty}\int_{-1}^{1} t\exp\left(-\alpha_b^2(t^2+x^2+2tx\xi)\right)d\xi dt\\
+&=-\frac{1}{4\pi}\frac{n_b}{n_0}\frac{\alpha_b}{\pi^{1/2}}\frac{1}{x}\int_0^{\infty}\left(\exp[-\alpha_b^2(t-x)^2]-\exp[-\alpha_b^2(t+x)^2]\right)dt\\
+&=-\frac{\alpha_b}{4\pi}\frac{n_b}{n_0}\frac{\erf\left(\alpha_bx\right)}{\alpha_bx}
+\end{split}
+\end{align}
+and, for the second, a similar computation gives
+\begin{align}
+\begin{split}
+\Psi_b(\bm{x},t)&=-\frac{n_b}{n_0}\frac{\alpha_b^3}{\pi^{3/2}}\frac{1}{8\pi}\int \exp\left(-\alpha_b^2y^2\right)\mid \bm{x}-\bm{y}\mid d\bm{y}\\
+&=-\frac{n_b}{n_0}\frac{\alpha_b^3}{\pi^{3/2}}\frac{1}{4}\int_{0}^{\infty}\int_{-1}^{1} t^3\exp\left(-\alpha_b^2(t^2+x^2+2tx\xi)\right)d\xi dt\\
+&=-\frac{1}{8\pi}\frac{n_b}{n_0}\frac{\alpha_b}{\pi^{1/2}}\frac{1}{x}\int_0^{\infty}t^2\left(\exp[-\alpha_b^2(t-x)^2]-\exp[-\alpha_b^2(t+x)^2]\right)dt\\
+&=-\frac{1}{8\pi\alpha_b}\frac{n_b}{n_0}\left[\frac{\exp(-\alpha_b^2x^2)}{\sqrt{\pi}}+\left(\frac{1}{2\alpha_bx}+\alpha_bx\right)\erf(\alpha_bx)\right].
+\end{split}
+\end{align}
+When the reference density $n_0$ and velocity $v_0$ are specied, the normalized potentials can be evaluated given the density and temperature of the background species.
+
 \section{Weak formulation with backward Euler step}
 Because the kinetic equation is stiff, the time discretization should be done by backward differentiation. We will use backward Euler, approximating the time derivative of the distribution function at time instance $s$ with the expression $\partial F^{s}/\partial\tau\approx (F^{s}-F^{s-1})/\delta \tau$. Further, because we cannot handle infinite domains, the space must be truncated. This requires careful treatment of the Poisson equations, and boundary conditions computed from the Green's function solution.
 
