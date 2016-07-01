@@ -66,14 +66,16 @@ int main()
   Constant dtau(1.0); // the normalized time step in slowing times
   Constant mu(2.72443712e-04); // the electron to ion mass ratio 9.1093898e-31/3.3435860e-27
   Constant zero(0.0); // Constant to be used as the boundary condition for the kinetic equation
-  Constant Tnorm(1.0e4); // Normalization temperature for vo
-  Constant Ti0(1.0e4); // Initial ion temperature
-  Constant Tif(-0.9); // Fraction of ion temperature change in collapse time
-  Constant ni0(1.0); // Initial ion density fraction to reference density
-  Constant nif(0.5); // fraction of ion density change in collapse time
-  Constant gamma_c(0.3); // The thermal collapse rate (inverse timescale)
-  Constant gamma_src(0.3); // The source rate
-  Constant srcmax(0.0); // The source max
+  double Tnorm(1.0e4); // Normalization temperature for vo
+  double Ti0(1.0e4); // Initial ion temperature
+  double Tif(-0.9); // Fraction of ion temperature change in collapse time
+  double ni0(1.0); // Initial ion density fraction to reference density
+  double nif(0.5); // fraction of ion density change in collapse time
+  double gamma_c(0.3); // The thermal collapse rate (inverse timescale)
+  double gamma_g(0.3); // The solution dependent source rise rate 
+  double gamma_src(0.3); // The source rise rate
+  double gmax(0.0); // The solution dependent source factor
+  double srcmax(0.0); // The source max
   int nt(1000);
   
   // ---------------------------------------------------------------
@@ -89,13 +91,29 @@ int main()
       std::string(type);
       in>>type;
       if(type == "srcmax") {
-        in>>val;
-        srcmax=val;
+        in>>srcmax;
       } else if (type == "gamma_src") {
-        in>>val;
-        gamma_src=val;
+        in>>gamma_src;
       } else if (type == "nt") {
         in>>nt;
+      } else if (type == "Tnorm") {
+        in>>Tnorm;
+      } else if (type == "Ti0") {
+        in>>Ti0;
+      } else if (type == "Tif") {
+        in>>Tif;
+      } else if (type == "Efield") {
+        in>>val;
+        Efield=val;
+      } else if (type == "dtau") {
+        in>>val;
+        dtau=val;
+      } else if (type == "nu") {
+        in>>val;
+        nu=val;
+      } else if (type == "nui") {
+        in>>val;
+        nui=val;
       } else {
         std::cout << "Unknown setting input " <<type<<std::endl;
       }
@@ -200,8 +218,8 @@ int main()
   // ---------------------------------------------------------------------
   // Set up solution dependent source
   // ---------------------------------------------------------------------
-  gs.gamma_g=0.3;
-  gs.gmax=0.0;
+  gs.gamma_g=gamma_g;
+  gs.gmax=gmax;
   gs.compute_coeffs();
   g.interpolate(gs);
 
@@ -279,14 +297,12 @@ int main()
     // ---------------------------------------------------------------------
     // Solve for the potential functions
     // ---------------------------------------------------------------------
-    
     solve(a_laplace == L_phi, phi, boundary_condition_phi);
     solve(a_laplace == L_psi, psi, boundary_condition_psi);
     
     // ---------------------------------------------------------------------
     // solve for the next value of the distribution function
     // ---------------------------------------------------------------------
-    
     solve(a_kinetic == L_kinetic, f, boundary_condition_f);
   
     // ---------------------------------------------------------------------
