@@ -2,6 +2,7 @@
 #include <dolfin.h>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include "Forms.h"
 #include "BCassembler.h"
 #include "KphiRZ.h"
@@ -65,6 +66,44 @@ int main()
   Constant dtau(1.0); // the normalized time step in slowing times
   Constant mu(2.72443712e-04); // the electron to ion mass ratio 9.1093898e-31/3.3435860e-27
   Constant zero(0.0); // Constant to be used as the boundary condition for the kinetic equation
+  Constant Tnorm(1.0e4); // Normalization temperature for vo
+  Constant Ti0(1.0e4); // Initial ion temperature
+  Constant Tif(-0.9); // Fraction of ion temperature change in collapse time
+  Constant ni0(1.0); // Initial ion density fraction to reference density
+  Constant nif(0.5); // fraction of ion density change in collapse time
+  Constant gamma_c(0.3); // The thermal collapse rate (inverse timescale)
+  Constant gamma_src(0.3); // The source rate
+  Constant srcmax(0.0); // The source max
+  int nt(1000);
+  
+  // ---------------------------------------------------------------
+  // Read the input.dat file.
+  // Values are assumed specified as "variable_name value" on each line
+  // ---------------------------------------------------------------
+  std::string line;
+  std::ifstream file_inp("input.dat");
+  float val;
+  if (file_inp.is_open()) {
+    while(getline(file_inp,line)) {
+      std::istringstream in(line);
+      std::string(type);
+      in>>type;
+      if(type == "srcmax") {
+        in>>val;
+        srcmax=val;
+      } else if (type == "gamma_src") {
+        in>>val;
+        gamma_src=val;
+      } else if (type == "nt") {
+        in>>nt;
+      } else {
+        std::cout << "Unknown setting input " <<type<<std::endl;
+      }
+    }
+    file_inp.close();
+  } else {
+    std::cout << "No input file" << std::endl;
+  }
 
   // ---------------------------------------------------------------
   // Initialize the bilinear, linear and integral forms
@@ -129,12 +168,23 @@ int main()
   DirichletBC boundary_condition_f (V, zero , boundaries, 1);
 
   // ---------------------------------------------------------------------
-  // Set initial ion potentials
+  // Set ion potential parameters
+  // the redundant variables shoudl be collapsed into one
   // ---------------------------------------------------------------------
-  phii_state.phimax=1.0;
-  psii_state.psimax=1.0;
-  phii_state.gamma_phi=0.3;
-  psii_state.gamma_psi=0.3;
+  phii_state.phi0=ni0;
+  psii_state.psi0=ni0;
+  phii_state.phif=nif;
+  psii_state.psif=nif;
+  phii_state.Ti0=Ti0; 
+  psii_state.Ti0=Ti0; 
+  phii_state.Tif=Tif;
+  psii_state.Tif=Tif;
+  phii_state.Tnorm=Tnorm;
+  psii_state.Tnorm=Tnorm;
+  phii_state.mu=mu;
+  psii_state.mu=mu;
+  phii_state.gamma_phi=gamma_c;
+  psii_state.gamma_psi=gamma_c;
   phii_state.compute_coeffs();
   psii_state.compute_coeffs();
   phii.interpolate(phii_state); 
@@ -143,8 +193,8 @@ int main()
   // ---------------------------------------------------------------------
   // Set up solution independent source
   // ---------------------------------------------------------------------
-  s.gamma_src=0.3;
-  s.srcmax=0.0;
+  s.gamma_src=gamma_src;
+  s.srcmax=srcmax;
   s.compute_coeffs();
 
   // ---------------------------------------------------------------------
@@ -189,7 +239,6 @@ int main()
   
   double t(0.0);
   double jpar(0.0);
-  int nt(1000);
   for (int it = 1; it <= nt; it++) {
 
     std::cout<<"time step: "<<it<<"/"<<nt<<" time: "<<t<< " jpar: "<<jpar<<std::endl;
@@ -266,7 +315,8 @@ int main()
       file_psii << psii, t;    
     };
 
-    file_dis << it <<" "<< t <<" "<< dtau <<" "<< jpar <<" "<< Efield <<"\n";
+    file_dis << it <<" "<< t <<" "<< dtau <<" "<< jpar <<" "<< Efield 
+             << " "<< phii_state.Ti <<" "<< phii_state.phii0 << "\n";
 	
   }
   swatch.stop();
