@@ -1,5 +1,7 @@
 // 2016 Hirvijoki-Pfefferle-Brennan Princeton Plasma Physics Lab
 #include <dolfin.h>
+#include <iostream>
+#include <fstream>
 #include "Forms.h"
 #include "BCassembler.h"
 #include "KphiRZ.h"
@@ -57,10 +59,10 @@ int main()
   // Define the parameters for the kinetic equation
   // ---------------------------------------------------------------
 
-  Constant Efield(0.1); // the normalized electric field
-  Constant nu(1.0); // the normalized collision frequency
-  Constant nui(1.0); // the normalized collision frequency ions = nu*Zeff^2
-  Constant dtau(1.0); // the normalized time step
+  Constant Efield(0.005); // the normalized electric field
+  Constant nu(4.0e-6); // the normalized collision frequency
+  Constant nui(1.6e-5); // the normalized collision frequency ions = nu*Zeff^2
+  Constant dtau(1.0); // the normalized time step in slowing times
   Constant mu(2.72443712e-04); // the electron to ion mass ratio 9.1093898e-31/3.3435860e-27
   Constant zero(0.0); // Constant to be used as the boundary condition for the kinetic equation
 
@@ -149,7 +151,7 @@ int main()
   // Set up solution dependent source
   // ---------------------------------------------------------------------
   gs.gamma_g=0.3;
-  gs.gmax=0.1;
+  gs.gmax=0.0;
   gs.compute_coeffs();
   g.interpolate(gs);
 
@@ -169,6 +171,7 @@ int main()
   File file_phii("phii.pvd");
   File file_psi("psi.pvd");
   File file_psii("psii.pvd");
+  std::ofstream file_dis("discharge.dat");
   f.rename("f","f");
   phi.rename("phi","phi"); 
   psi.rename("psi","psi");
@@ -186,7 +189,7 @@ int main()
   
   double t(0.0);
   double jpar(0.0);
-  int nt(40);
+  int nt(1000);
   for (int it = 1; it <= nt; it++) {
 
     std::cout<<"time step: "<<it<<"/"<<nt<<" time: "<<t<< " jpar: "<<jpar<<std::endl;
@@ -240,33 +243,39 @@ int main()
     // ---------------------------------------------------------------------
     // update the fprev from the current f
     // ---------------------------------------------------------------------
-
     fprev=f; // Check that this doesn't cause memory leaks!!!
     
     // ---------------------------------------------------------------------
-    // Advance the time
+    // Calculate the parallel current density for the electric field update
     // ---------------------------------------------------------------------
     jpar=assemble(current_form);
 
-
+    // ---------------------------------------------------------------------
+    // Advance the time
+    // ---------------------------------------------------------------------
     t= t+dtau;
 
     // ---------------------------------------------------------------------
-    // Write time stamps of f, phi, psi etc. to separate files.  The 
-    // rename calls ensure the variables are named correctly in the files.
+    // Write time stamps of f, phi, psi etc. to separate files. 
     // ---------------------------------------------------------------------
+    if (it % 10==0) {
+      file_f << f, t;
+      file_phi << phi, t;
+      file_psi << psi, t;    
+      file_phii << phii, t;
+      file_psii << psii, t;    
+    };
 
-    file_f << f, t;
-    file_phi << phi, t;
-    file_psi << psi, t;    
-    file_phii << phii, t;
-    file_psii << psii, t;    
+    file_dis << it <<" "<< t <<" "<< dtau <<" "<< jpar <<" "<< Efield <<"\n";
 	
   }
   swatch.stop();
 
   list_timings();
   
+  file_dis.close();
+
+  interactive();
   return 0;
 }
 
