@@ -1,3 +1,9 @@
-gamma_src 0.1
-srcmax 1.2
-nt 30
+nt 200
+Efield 0.01
+t0 100
+Tif -0.5
+nif 0.5
+srcmax 10.0
+jcon = 1
+tf 150
+

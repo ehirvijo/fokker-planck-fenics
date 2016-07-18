@@ -21,8 +21,13 @@ void Psiistate::eval(Array<double>& values, const Array<double>& x) const
 // A method to compute the coefficents at this time
 void Psiistate::compute_coeffs()
 {
-  psii0 = psi0*(1.0 + psif*(1.0 - exp(-gamma_psi*t)));
-  Ti=Ti0*(1.0 + Tif*(1.0 - exp(-gamma_psi*t)));
+  if (t>=t0) {
+    psii0 = psi0*(1.0 + psif*(1.0 - exp(-gamma_psi*(t-t0))));
+    Ti = Ti0*(1.0 + Tif*(1.0 - exp(-gamma_psi*(t-t0))));
+  } else {
+    psii0 = psi0;
+    Ti = Ti0;
+  }
   alpha = sqrt(Tnorm/(mu*Ti));
 }
 

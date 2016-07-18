@@ -39,44 +39,65 @@ int main()
   // Define the functions and derived expressions that we will need
   // --------------------------------------------------------------
   
-  Function f(V); // the distribution function
-  Function fprev(V); // the distribution function at previous time instance
-  Function phi(V); // the first rosenbluth potential
-  Function phii(V); // the first rosenbluth potential ions
-  Function psi(V); // the second rosenbluth potential
-  Function psii(V); // the second rosenbluth potential ions
-  Function g(V); // the parallel dependent sink function on the grid
-  GSource gs; // the parallel dependent expression
-  Source s; // the user specified source/sink expression
+  Function f(V); // distribution function
+  Function fprev(V); // distribution function at previous time instance
+  Function phi(V); // first rosenbluth potential
+  Function phii(V); // first rosenbluth potential ions
+  Function psi(V); // second rosenbluth potential
+  Function psii(V); // second rosenbluth potential ions
+  Function g(V); // parallel dependent sink function on the grid
+  GSource gs; // parallel dependent expression
+  Source s; // user specified source/sink expression
   KphiRZ Kphi; // Green's function for phi
   KpsiRZ Kpsi; // Green's function for psi
   Vparallel Vpar; // "function" for assembling the plasma current form
   Jacobian Jac; // Jacobian for the space 
-  Psiistate psii_state; // the user-specified ion psi state
-  Phiistate phii_state; // the user-specified ion phi state
-  Inistate initial_state; // the user-specified initial state
+  Psiistate psii_state; // user-specified ion psi state
+  Phiistate phii_state; // user-specified ion phi state
+  Inistate initial_state; // user-specified initial state
     
   // ---------------------------------------------------------------
   // Define the parameters for the kinetic equation
   // ---------------------------------------------------------------
 
-  Constant Efield(0.005); // the normalized electric field
-  Constant nu(4.0e-6); // the normalized collision frequency
-  Constant nui(1.6e-5); // the normalized collision frequency ions = nu*Zeff^2
-  Constant dtau(1.0); // the normalized time step in slowing times
-  Constant mu(2.72443712e-04); // the electron to ion mass ratio 9.1093898e-31/3.3435860e-27
-  Constant zero(0.0); // Constant to be used as the boundary condition for the kinetic equation
-  double Tnorm(1.0e4); // Normalization temperature for vo
-  double Ti0(1.0e4); // Initial ion temperature
-  double Tif(-0.9); // Fraction of ion temperature change in collapse time
-  double ni0(1.0); // Initial ion density fraction to reference density
-  double nif(0.5); // fraction of ion density change in collapse time
-  double gamma_c(0.3); // The thermal collapse rate (inverse timescale)
-  double gamma_g(0.3); // The solution dependent source rise rate 
-  double gamma_src(0.3); // The source rise rate
-  double gmax(0.0); // The solution dependent source factor
-  double srcmax(0.0); // The source max
-  int nt(1000);
+  Constant Efield(0.005); // normalized electric field
+  Constant nu(1.0); // normalized collision frequency
+  Constant nui(1.0); // normalized collision frequency ions = nu*Zeff^2
+  Constant dtau(1.0); // normalized time step in slowing times
+  Constant mu(2.72443712e-04); // electron to ion mass ratio 9.1093898e-31/3.3435860e-27
+  Constant zero(0.0); // constant to be used as the boundary condition for the kinetic equation
+  Constant one(1.0); // constant to be used integrate the density
+  double Tnorm(1.0e4); // normalization temperature for vo
+
+  // ---------------------------------------------------------------
+  // Define the parameters controlling the run scenario
+  // ---------------------------------------------------------------
+
+  double Ti0(1.0e4); // initial ion temperature
+  double Tif(0.0); // fraction of ion temperature change in collapse time
+  double ni0(1.0); // initial ion density fraction to reference density
+  double nif(0.0); // fraction of ion density change in collapse time
+  double gamma_c(0.3); // thermal collapse rate (inverse timescale)
+  double gamma_g(0.3); // solution dependent source rise rate 
+  double gamma_src(0.3); // source rise rate
+  double gmax(0.0); // solution dependent source factor
+  double srcmax(0.0); // source max
+  double srcsig(0.01); // source sigma in exponential (width)
+  double t0(0); // time to turn on the temperature and density collapse
+  double tf(0); // time to turn off the source
+  double t(0.0); // the time
+  double ne(0.0); // the electron number density
+  double jpar(0.0); // the parallel current
+  double jpartm(0.0); // the parallel current from the previous timestep
+  int jcon = 1; // conserve current after t0
+  int setcurrent = 1; // current record switch
+
+  // ---------------------------------------------------------------
+  // Define the computational parameters 
+  // ---------------------------------------------------------------
+
+  int nt(200); // number of iterations
+  int pltout(0); // realtime plotting option
   
   // ---------------------------------------------------------------
   // Read the input.dat file.
@@ -90,30 +111,48 @@ int main()
       std::istringstream in(line);
       std::string(type);
       in>>type;
-      if(type == "srcmax") {
+      if (type == "nt") {
+        in>>nt;
+      } else if (type == "dtau") {
+        in>>val;
+        dtau=val;
+      } else if (type == "pltout") {
+        in>>pltout;
+      } else if (type == "srcmax") {
         in>>srcmax;
+      } else if (type == "srcsig") {
+        in>>srcsig;
       } else if (type == "gamma_src") {
         in>>gamma_src;
-      } else if (type == "nt") {
-        in>>nt;
+      } else if (type == "gmax") {
+        in>>gmax;
+      } else if (type == "gamma_g") {
+        in>>gamma_g;
+      } else if (type == "gamma_c") {
+        in>>gamma_c;
       } else if (type == "Tnorm") {
         in>>Tnorm;
       } else if (type == "Ti0") {
         in>>Ti0;
       } else if (type == "Tif") {
         in>>Tif;
-      } else if (type == "Efield") {
-        in>>val;
-        Efield=val;
-      } else if (type == "dtau") {
-        in>>val;
-        dtau=val;
+      } else if (type == "ni0") {
+        in>>ni0;
+      } else if (type == "nif") {
+        in>>nif;
       } else if (type == "nu") {
         in>>val;
         nu=val;
       } else if (type == "nui") {
         in>>val;
         nui=val;
+      } else if (type == "Efield") {
+        in>>val;
+        Efield=val;
+      } else if (type == "t0") {
+        in>>t0;
+      } else if (type == "tf") {
+        in>>tf;
       } else {
         std::cout << "Unknown setting input " <<type<<std::endl;
       }
@@ -134,7 +173,8 @@ int main()
   Forms::Form_LKinetic L_kinetic(V); // linear form for the time discrete kinetic equation
   Forms::Form_weightedIntegral phi_form(mesh,fprev,Kphi,Jac); // form for computing phi directly
   Forms::Form_weightedIntegral psi_form(mesh,fprev,Kpsi,Jac); // form for computing psi directly
-  Forms::Form_weightedIntegral current_form(mesh,fprev,Vpar,Jac); // form for computing psi directly
+  Forms::Form_weightedIntegral current_form(mesh,fprev,Vpar,Jac); // form for computing jpar directly
+  Forms::Form_weightedIntegral density_form(mesh,fprev,one,Jac); // form for computing ne directly
 
   // ---------------------------------------------------------------
   // Assign the functions and parameters for bilinear and linear 
@@ -171,6 +211,10 @@ int main()
   current_form.k=Vpar;
   current_form.J=Jac;
 
+  density_form.f=fprev;
+  density_form.k=one;
+  density_form.J=Jac;
+
   // ---------------------------------------------------------------------
   // Assign the greens function solutions to the potential equations
   // ---------------------------------------------------------------------
@@ -203,6 +247,8 @@ int main()
   psii_state.mu=mu;
   phii_state.gamma_phi=gamma_c;
   psii_state.gamma_psi=gamma_c;
+  phii_state.t0=t0;
+  psii_state.t0=t0;
   phii_state.compute_coeffs();
   psii_state.compute_coeffs();
   phii.interpolate(phii_state); 
@@ -213,6 +259,9 @@ int main()
   // ---------------------------------------------------------------------
   s.gamma_src=gamma_src;
   s.srcmax=srcmax;
+  s.srcsig=srcsig;
+  s.t0=t0;
+  s.tf=tf;
   s.compute_coeffs();
 
   // ---------------------------------------------------------------------
@@ -220,6 +269,7 @@ int main()
   // ---------------------------------------------------------------------
   gs.gamma_g=gamma_g;
   gs.gmax=gmax;
+  gs.t0=t0;
   gs.compute_coeffs();
   g.interpolate(gs);
 
@@ -252,24 +302,23 @@ int main()
   // ---------------------------------------------------------------------
 
   swatch.stop();
-  
   swatch = Timer("Time loop and problem solving");
   
-  double t(0.0);
-  double jpar(0.0);
   for (int it = 1; it <= nt; it++) {
 
     std::cout<<"time step: "<<it<<"/"<<nt<<" time: "<<t<< " jpar: "<<jpar<<std::endl;
 
+    if (pltout == 1) {
     // ---------------------------------------------------------------------
     // On the fly plotting for simple studies, use paraview to generate 
     // movies.
     // ---------------------------------------------------------------------
-    plot(f,std::string("distribution function f"));
-    //plot(g,std::string("sink function operator"));
-    //plot(phii,std::string("phii_state"));
-    //plot(psii,std::string("psii_state"));
-    //interactive();
+      plot(f,std::string("distribution function f"));
+      //plot(g,std::string("sink function operator"));
+      //plot(phii,std::string("phii_state"));
+      //plot(psii,std::string("psii_state"));
+      //interactive();
+    }
 
     // ---------------------------------------------------------------------
     // Set ion potentials
@@ -311,14 +360,27 @@ int main()
     fprev=f; // Check that this doesn't cause memory leaks!!!
     
     // ---------------------------------------------------------------------
+    // Calculate the electron number density
+    // ---------------------------------------------------------------------
+    ne=assemble(density_form);
+
+    // ---------------------------------------------------------------------
     // Calculate the parallel current density for the electric field update
     // ---------------------------------------------------------------------
+    if (t>=t0 && setcurrent==1) {
+      jpartm=jpar;
+      setcurrent = 0;
+    }
     jpar=assemble(current_form);
 
     // ---------------------------------------------------------------------
-    // Advance the time
+    // After t0 set the electric field to conserve the parrallel current
     // ---------------------------------------------------------------------
-    t= t+dtau;
+    if (jcon==1 && t>=t0 && jpar!=0.0) {
+      Efield = Efield*jpartm/jpar;  // Is this the best way to constrain?
+                                    // think this through
+    }
+    a_kinetic.E = Efield;
 
     // ---------------------------------------------------------------------
     // Write time stamps of f, phi, psi etc. to separate files. 
@@ -329,19 +391,23 @@ int main()
       file_psi << psi, t;    
       file_phii << phii, t;
       file_psii << psii, t;    
-    };
+    }
 
     file_dis << it <<" "<< t <<" "<< dtau <<" "<< jpar <<" "<< Efield 
-             << " "<< phii_state.Ti <<" "<< phii_state.phii0 << "\n";
+             <<" "<< phii_state.Ti <<" "<< phii_state.phii0 
+             <<" "<< ne << "\n";
 	
+    // ---------------------------------------------------------------------
+    // Advance the time
+    // ---------------------------------------------------------------------
+    t= t+dtau;
   }
   swatch.stop();
-
   list_timings();
   
   file_dis.close();
 
-  interactive();
+  if (pltout == 1) interactive();
   return 0;
 }
 

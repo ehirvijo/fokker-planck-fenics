@@ -19,7 +19,7 @@ namespace dolfin
 
     // Evaluation routine
     void eval(Array<double>& values, const Array<double>& x) const;
-    double phii0,phi0,phif,t,gamma_phi,alpha,Ti,Ti0,Tif,Tnorm,mu;
+    double phii0,phi0,phif,t,t0,gamma_phi,alpha,Ti,Ti0,Tif,Tnorm,mu;
     void compute_coeffs();
 
   private:

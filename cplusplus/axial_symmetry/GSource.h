@@ -14,7 +14,7 @@ namespace dolfin
   {
   public:
     void eval(Array<double>& values, const Array<double>& x) const;
-    double g0,gmax,t,gamma_g;
+    double g0,gmax,t,t0,gamma_g;
     void compute_coeffs();
 
   private:
