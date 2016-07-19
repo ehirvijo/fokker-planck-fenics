@@ -6,4 +6,6 @@ nif 0.5
 srcmax 10.0
 jcon 1
 tf 150
+pltout 1
+ionfunc 1
 

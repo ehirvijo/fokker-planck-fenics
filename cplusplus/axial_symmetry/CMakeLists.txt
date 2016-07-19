@@ -38,7 +38,7 @@ include_directories(SYSTEM ${DOLFIN_3RD_PARTY_INCLUDE_DIRS})
 endif()
 
 # Executable
-add_executable(${PROJECT_NAME} KRZ.cpp KphiRZ.cpp KpsiRZ.cpp BCassembler.cpp Inistate.cpp Phiistate.cpp Psiistate.cpp Source.cpp GSource.cpp Vparallel.cpp Jacobian.cpp main.cpp)
+add_executable(${PROJECT_NAME} KRZ.cpp KphiRZ.cpp KpsiRZ.cpp BCassembler.cpp Inistate.cpp Phiistate.cpp Psiistate.cpp Phizstate.cpp Psizstate.cpp Source.cpp GSource.cpp Vparallel.cpp Jacobian.cpp main.cpp)
 
 # Target libraries
 target_link_libraries(${PROJECT_NAME} ${DOLFIN_LIBRARIES} ${DOLFIN_3RD_PARTY_LIBRARIES})

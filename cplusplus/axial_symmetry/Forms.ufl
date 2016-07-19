@@ -15,6 +15,8 @@ phi = Coefficient(element) # first Rosenbluth potential
 psi = Coefficient(element) # second Rosenbluth potential
 phii = Coefficient(element) # first Rosenbluth potential ions
 psii = Coefficient(element) # second Rosenbluth potential ions
+phiz = Coefficient(element) # first Rosenbluth potential impurity ions
+psiz = Coefficient(element) # second Rosenbluth potential impurity ions
 S = Coefficient(element) # the source/sink independent of solution
 g = Coefficient(element) # the source/sink dependent on v_{||}
 
@@ -23,7 +25,9 @@ dtau = Constant(triangle)
 E = Constant(triangle)
 nu = Constant(triangle) # electron nu
 nui = Constant(triangle) # ion nu
+nuz = Constant(triangle) # impurity ion nu
 mu = Constant(triangle) # electron to ion mass ratio
+muz = Constant(triangle) # electron to impurity ion mass ratio
 
 # Bilinear forms:
 # "aLaplace" for the potential equations.
@@ -33,7 +37,7 @@ aLaplace = -(u.dx(0)*v.dx(0)+u.dx(1)*v.dx(1))*J*dx
 
 #aKinetic = (u*v - dtau*E*v*u.dx(1) + dtau*nu*((v.dx(0)*phi.dx(0)+v.dx(1)*phi.dx(1))*u - v.dx(0)*psi.dx(0).dx(0)*u.dx(0)-psi.dx(0).dx(1)*(u.dx(0)*v.dx(1)+u.dx(1)*v.dx(0))-v.dx(1)*psi.dx(1).dx(1)*u.dx(1)) )*J*dx
 
-aKinetic = (u*v - dtau*g*u*v - dtau*E*v*u.dx(1) + dtau*nu*((v.dx(0)*phi.dx(0)+v.dx(1)*phi.dx(1))*u - v.dx(0)*psi.dx(0).dx(0)*u.dx(0)-psi.dx(0).dx(1)*(u.dx(0)*v.dx(1)+u.dx(1)*v.dx(0))-v.dx(1)*psi.dx(1).dx(1)*u.dx(1)) + dtau*nui*(mu*(v.dx(0)*phii.dx(0)+v.dx(1)*phii.dx(1))*u - v.dx(0)*psii.dx(0).dx(0)*u.dx(0)-psii.dx(0).dx(1)*(u.dx(0)*v.dx(1)+u.dx(1)*v.dx(0))-v.dx(1)*psii.dx(1).dx(1)*u.dx(1)) )*J*dx
+aKinetic = (u*v - dtau*g*u*v - dtau*E*v*u.dx(1) + dtau*nu*((v.dx(0)*phi.dx(0)+v.dx(1)*phi.dx(1))*u - v.dx(0)*psi.dx(0).dx(0)*u.dx(0)-psi.dx(0).dx(1)*(u.dx(0)*v.dx(1)+u.dx(1)*v.dx(0))-v.dx(1)*psi.dx(1).dx(1)*u.dx(1)) + dtau*nui*(mu*(v.dx(0)*phii.dx(0)+v.dx(1)*phii.dx(1))*u - v.dx(0)*psii.dx(0).dx(0)*u.dx(0)-psii.dx(0).dx(1)*(u.dx(0)*v.dx(1)+u.dx(1)*v.dx(0))-v.dx(1)*psii.dx(1).dx(1)*u.dx(1)) + dtau*nuz*(muz*(v.dx(0)*phiz.dx(0)+v.dx(1)*phiz.dx(1))*u - v.dx(0)*psiz.dx(0).dx(0)*u.dx(0)-psiz.dx(0).dx(1)*(u.dx(0)*v.dx(1)+u.dx(1)*v.dx(0))-v.dx(1)*psiz.dx(1).dx(1)*u.dx(1)) )*J*dx
 
 aProjection = inner(u,v)*J*dx
 
