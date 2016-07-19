@@ -4,6 +4,6 @@ t0 100
 Tif -0.5
 nif 0.5
 srcmax 10.0
-jcon = 1
+jcon 1
 tf 150
 
