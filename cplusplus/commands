@@ -1,0 +1,27 @@
+  sudo apt-get update && sudo apt-get upgrade
+  sudo apt-get remove libcheese-gtk23
+  sudo apt-get install xserver-xorg-core
+  sudo apt-get install -f virtualbox-guest-x11
+  sudo /etc/init.d/virtualbox-guest-utils 
+  /etc/init.d/virtualbox-guest-x11 setup
+  /etc/init.d/virtualbox-guest-utils setup
+  /etc/init.d/virtualbox-guest-utils status
+  /etc/init.d/virtualbox-guest-x11 status
+  ls -l /opt
+  sudo apt-get install emacs
+  sudo apt-get install ipython
+  sudo apt-get install git
+  sudo apt-get install fenics
+  cd ~/Codes
+  git clone https://github.com/ehirvijo/fokker-planck-fenics
+  cd fokker-planck-fenics/cpluplus/axial_symmetry
+  ./compile_script.sh 
+
+  git pull
+
+  sudo apt-get gmsh
+  sudo apt-get install gmsh
+  vi half_circle.geo
+  gmsh -2 half_circle.geo 
+  dolfin-convert half_circle.msh 
+  dolfin-convert half_circle.msh half_circle.xml
