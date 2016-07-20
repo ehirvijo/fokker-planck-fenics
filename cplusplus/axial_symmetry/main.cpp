@@ -104,7 +104,7 @@ int main()
   double ne0(0.0); // initial electron number density
   double jpar(0.0); // parallel current
   double jpartm(0.0); // parallel current from the previous timestep
-  int jcon = 1; // conserve current after t0
+  int jcon = 0; // conserve current after t0
   int setcurrent = 1; // current record switch
   int ionfunc = 0; // the time advance method for the ions
 
