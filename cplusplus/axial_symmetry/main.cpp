@@ -16,6 +16,7 @@
 #include "Psizstate.h"
 #include "Jacobian.h"
 #include "Vparallel.h"
+#include "Vsq.h"
 
 using namespace dolfin;
 
@@ -55,6 +56,7 @@ int main()
   KphiRZ Kphi; // Green's function for phi
   KpsiRZ Kpsi; // Green's function for psi
   Vparallel Vpar; // "function" for assembling the plasma current form
+  Vsq vs; // "function" for assembling the temperature form
   Jacobian Jac; // Jacobian for the space 
   Psiistate psii_state; // user-specified ion psi state
   Phiistate phii_state; // user-specified ion phi state
@@ -65,7 +67,6 @@ int main()
   // ---------------------------------------------------------------
   // Define the parameters for the kinetic equation
   // ---------------------------------------------------------------
-
   Constant Efield(0.005); // normalized electric field
   Constant nu(1.0); // normalized collision frequency
   Constant nui(1.0); // normalized collision frequency ions = nu*Z0
@@ -104,9 +105,17 @@ int main()
   double ne0(0.0); // initial electron number density
   double jpar(0.0); // parallel current
   double jpartm(0.0); // parallel current from the previous timestep
+  double Efieldtm(0.0); // electric field from the previous timestep
+  double delE(1.0); // normalized electric field change
+  double delJ(0.0); // normalized J change
+  double dJdE(0.0); // derivative of current with E, ie 1/eta
+  double temp(0.0); // temperature
   int jcon = 0; // conserve current after t0
   int setcurrent = 1; // current record switch
   int ionfunc = 0; // the time advance method for the ions
+  int Eitsmx_set = 10; // input to maximum number of electric field iterations
+  int Eitsmx = 1; // maximum number of electric field iterations
+  int Eits = 0; // electric field iterations
 
   // ---------------------------------------------------------------
   // Define the computational parameters 
@@ -171,6 +180,8 @@ int main()
         in>>tf;
       } else if (type == "jcon") {
         in>>jcon;
+      } else if (type == "Eitsmx") {
+        in>>Eitsmx_set;
       } else if (type == "ionfunc") {
         in>>ionfunc;
       } else {
@@ -193,8 +204,9 @@ int main()
   Forms::Form_LKinetic L_kinetic(V); // linear form for the time discrete kinetic equation
   Forms::Form_weightedIntegral phi_form(mesh,fprev,Kphi,Jac); // form for computing phi directly
   Forms::Form_weightedIntegral psi_form(mesh,fprev,Kpsi,Jac); // form for computing psi directly
-  Forms::Form_weightedIntegral current_form(mesh,fprev,Vpar,Jac); // form for computing jpar directly
-  Forms::Form_weightedIntegral density_form(mesh,fprev,one,Jac); // form for computing ne directly
+  Forms::Form_weightedIntegral temp_form(mesh,f,vs,Jac); // form for computing temp directly
+  Forms::Form_weightedIntegral current_form(mesh,f,Vpar,Jac); // form for computing jpar directly
+  Forms::Form_weightedIntegral density_form(mesh,f,one,Jac); // form for computing ne directly
 
   // ---------------------------------------------------------------
   // Assign the functions and parameters for bilinear and linear 
@@ -231,11 +243,15 @@ int main()
   L_phi.f = fprev; 
   L_psi.f = phi;
   
-  current_form.f=fprev;
+  temp_form.f=f;
+  temp_form.k=vs;
+  temp_form.J=Jac;
+
+  current_form.f=f;
   current_form.k=Vpar;
   current_form.J=Jac;
 
-  density_form.f=fprev;
+  density_form.f=f;
   density_form.k=one;
   density_form.J=Jac;
 
@@ -273,6 +289,8 @@ int main()
   psii_state.gamma_psi=gamma_c;
   phii_state.t0=t0;
   psii_state.t0=t0;
+  phii_state.t=0;
+  psii_state.t=0;
   psii_state.ionfunc=ionfunc;
   phii_state.ionfunc=ionfunc;
   phii_state.compute_coeffs();
@@ -300,6 +318,8 @@ int main()
   psiz_state.gamma_psi=gamma_c;
   phiz_state.t0=t0;
   psiz_state.t0=t0;
+  phiz_state.t=0;
+  psiz_state.t=0;
   psiz_state.ionfunc=ionfunc;
   phiz_state.ionfunc=ionfunc;
   phiz_state.compute_coeffs();
@@ -315,6 +335,7 @@ int main()
   s.srcsig=srcsig;
   s.t0=t0;
   s.tf=tf;
+  s.t=0;
   s.compute_coeffs();
 
   // ---------------------------------------------------------------------
@@ -323,6 +344,7 @@ int main()
   gs.gamma_g=gamma_g;
   gs.gmax=gmax;
   gs.t0=t0;
+  gs.t=0;
   gs.compute_coeffs();
   g.interpolate(gs);
 
@@ -411,11 +433,13 @@ int main()
       // from the ne source, then sets the density coefficient in the ion
       // distributions.  It works by a rule, for increasing density
       // niz is increased, for decreasing, niz and ni0 are equally decreased.
+      if (t>=t0) {
       if (ne-nem>=0.0) {
         niz=niz+(ne-nem)/Zi;
       } else {
         ni=ni*ne/nem;
         niz=niz*ne/nem;
+      }
       }
       phii_state.phi0=ni;
       psii_state.psi0=ni;
@@ -453,39 +477,70 @@ int main()
     // ---------------------------------------------------------------------
     solve(a_laplace == L_phi, phi, boundary_condition_phi);
     solve(a_laplace == L_psi, psi, boundary_condition_psi);
+   
+    // ---------------------------------------------------------------------
+    // Main solve.
+    // Iterate for the electric field constraint, if set, else just one step
+    // ---------------------------------------------------------------------
+    Eits=0;
+    if (jcon!=1 || t<t0) {
+      Eitsmx=1;
+    } else {
+      Eitsmx=Eitsmx_set;
+    }
+
+    while (Eits<Eitsmx && delE>1e-4) {
+      Eits++;
+      // ---------------------------------------------------------------------
+      // solve for the next value of the distribution function
+      // ---------------------------------------------------------------------
+      solve(a_kinetic == L_kinetic, f, boundary_condition_f);
     
-    // ---------------------------------------------------------------------
-    // solve for the next value of the distribution function
-    // ---------------------------------------------------------------------
-    solve(a_kinetic == L_kinetic, f, boundary_condition_f);
-  
+      // ---------------------------------------------------------------------
+      // Calculate the parallel current density for the electric field update
+      // ---------------------------------------------------------------------
+      if (t>=t0 && setcurrent==1) {
+        jpartm=jpar;
+        dJdE=jpar/Efield;
+        setcurrent = 0;
+      }
+      jpar=assemble(current_form);
+      temp=assemble(temp_form);
+
+      // ---------------------------------------------------------------------
+      // After t0 set the electric field to conserve the parrallel current
+      // ---------------------------------------------------------------------
+      std::cout << "Eits " <<Eits<<" "<<delE<<" Eitsmx "<<Eitsmx<<std::endl;
+      if (jcon==1 && t>=t0 && jpar!=0.0) {
+
+          // her for the function is delJ=jpartm-jpar and the ordinate is 
+          // Efield.  At some Efield, delJ=0.
+            
+          // Efield = Efield*pow(jpartm/jpar,1);  // Is this the best way to constrain?
+                                        // think this through
+          // need a Newton step here.
+          delJ = jpar-jpartm;
+
+          Efieldtm = Efield;
+          Efield = Efield - delJ/dJdE;
+          delE = fabs((Efield-Efieldtm)/Efieldtm);
+
+          std::cout << "Efield " <<Efield<<" "<<Efieldtm<<" "<<delE<<std::endl;
+          std::cout << "jpar " <<jpar<<" "<<jpartm<<std::endl;
+      }
+      a_kinetic.E = Efield;
+    }
+    delE=1;
+
     // ---------------------------------------------------------------------
     // update the fprev from the current f
     // ---------------------------------------------------------------------
     fprev=f; // Check that this doesn't cause memory leaks!!!
     
     // ---------------------------------------------------------------------
-    // Calculate the parallel current density for the electric field update
-    // ---------------------------------------------------------------------
-    if (t>=t0 && setcurrent==1) {
-      jpartm=jpar;
-      setcurrent = 0;
-    }
-    jpar=assemble(current_form);
-
-    // ---------------------------------------------------------------------
-    // After t0 set the electric field to conserve the parrallel current
-    // ---------------------------------------------------------------------
-    if (jcon==1 && t>=t0 && jpar!=0.0) {
-      Efield = Efield*jpartm/jpar;  // Is this the best way to constrain?
-                                    // think this through
-    }
-    a_kinetic.E = Efield;
-
-    // ---------------------------------------------------------------------
     // Write time stamps of f, phi, psi etc. to separate files. 
     // ---------------------------------------------------------------------
-    if (it % 10==0) {
+    if (it % 100==0) {
       file_f << f, t;
       file_phi << phi, t;
       file_psi << psi, t;    
@@ -496,7 +551,8 @@ int main()
     }
 
     file_dis << it <<" "<< t <<" "<< dtau <<" "<< jpar <<" "<< Efield 
-             <<" "<< phii_state.Ti <<" "<< ni <<" "<< niz <<" "<< ne << "\n";
+             <<" "<< phii_state.Ti <<" "<< ni <<" "<< niz <<" "<< ne 
+             <<" "<< temp << "\n";
 	
     // ---------------------------------------------------------------------
     // Advance the time
