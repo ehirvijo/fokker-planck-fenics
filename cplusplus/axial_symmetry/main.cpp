@@ -165,6 +165,8 @@ int main()
         in>>ni0;
       } else if (type == "nif") {
         in>>nif;
+      } else if (type == "niz") {
+        in>>niz;
       } else if (type == "nu") {
         in>>val;
         nu=val;
