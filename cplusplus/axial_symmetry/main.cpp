@@ -554,7 +554,7 @@ int main()
 
     file_dis << it <<" "<< t <<" "<< dtau <<" "<< jpar <<" "<< Efield 
              <<" "<< phii_state.Ti <<" "<< ni <<" "<< niz <<" "<< ne 
-             <<" "<< temp << "\n";
+             <<" "<< temp << "\n" << std::flush;
 	
     // ---------------------------------------------------------------------
     // Advance the time

@@ -1,7 +1,7 @@
-nt 500
-Efield 0.001
-t0 175 
-tf 225
+nt 1500
+Efield 0.003
+t0 1000
+tf 1200
 jcon 1
 ionfunc 0
 srcmax 12.0
