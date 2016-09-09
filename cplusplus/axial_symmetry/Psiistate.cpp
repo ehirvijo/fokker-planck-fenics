@@ -11,9 +11,9 @@ void Psiistate::eval(Array<double>& values, const Array<double>& x) const
  
   // Limit[Erf[x]/x,x->0]=2/sqrt(mypi) 
   if (sqrt(rx2)<1.e-6) {
-    values[0] = -psii0/(2.0*sqrt(mypi)*pow(alpha,3));
+    values[0] = -psii0/(8.0*pow(mypi,1.5)*alpha);
   } else {
-    values[0] = -psii0*(exp(-alpha*alpha*rx2)/sqrt(mypi)+(1.0/(2*alpha*sqrt(rx2))+alpha*sqrt(rx2))*erf(alpha*sqrt(rx2)))/(4.0*pow(alpha,3));
+    values[0] = -psii0*(exp(-alpha*alpha*rx2)/sqrt(mypi)+(1.0/(2*alpha*sqrt(rx2))+alpha*sqrt(rx2))*erf(alpha*sqrt(rx2)))/(8.0*mypi*alpha);
   }
   
 }
