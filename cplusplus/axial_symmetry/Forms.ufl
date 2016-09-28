@@ -1,5 +1,5 @@
 # Elements
-element = FiniteElement("Lagrange", triangle,2)
+element = FiniteElement("Lagrange", triangle,3)
 
 
 # Trial and test functions

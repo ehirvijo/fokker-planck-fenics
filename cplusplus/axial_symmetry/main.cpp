@@ -72,6 +72,7 @@ int main()
   Constant nui(1.0); // normalized collision frequency ions = nu*Z0
   Constant nuz(18.0); // normalized collision frequency impurity ions = nu*Zi
   Constant dtau(1.0); // normalized time step in slowing times
+  Constant dtau_new(1e-3); // normalized time step after gas puffing
   Constant mu(2.72443712e-04); // electron to ion mass ratio 9.1093898e-31/3.3435860e-27
   Constant muz(6.81995875e-06); // electron to impurity ion mass ratio 9.1093898e-31/3.3435860e-27/39.948  Argon assumed for Zi and mass here
   Constant zero(0.0); // constant to be used as the boundary condition for the kinetic equation
@@ -104,12 +105,13 @@ int main()
   double nem(0.0); // electron number density from previous time
   double ne0(0.0); // initial electron number density
   double jpar(0.0); // parallel current
+  double jpar0(0.0); // parallel current cache
   double jpartm(0.0); // parallel current from the previous timestep
   double Efieldtm(0.0); // electric field from the previous timestep
   double delE(1.0); // normalized electric field change
   double delJ(0.0); // normalized J change
   double dJdE(0.0); // derivative of current with E, ie 1/eta
-  double temp(0.0); // temperature
+  double temp(1.5); // temperature
   int jcon = 0; // conserve current after t0
   int setcurrent = 1; // current record switch
   int ionfunc = 0; // the time advance method for the ions
@@ -141,6 +143,9 @@ int main()
       } else if (type == "dtau") {
         in>>val;
         dtau=val;
+      } else if (type == "dtau_new") {
+	in>>val;
+	dtau_new=val;
       } else if (type == "pltout") {
         in>>pltout;
       } else if (type == "srcmax") {
@@ -173,7 +178,10 @@ int main()
       } else if (type == "nui") {
         in>>val;
         nui=val;
-      } else if (type == "Efield") {
+      } else if (type == "nuz") {
+	in>>val;
+	nuz=val;
+      }else if (type == "Efield") {
         in>>val;
         Efield=val;
       } else if (type == "t0") {
@@ -447,6 +455,10 @@ int main()
       psii_state.psi0=ni;
       phiz_state.phi0=niz;
       psiz_state.psi0=niz;
+      phii_state.Ti0=Ti0/1.5*temp;
+      psii_state.Ti0=Ti0/1.5*temp;
+      phiz_state.Ti0=Ti0/1.5*temp;
+      psiz_state.Ti0=Ti0/1.5*temp;
     }
     phii_state.t=t;
     psii_state.t=t;
@@ -496,6 +508,7 @@ int main()
       // ---------------------------------------------------------------------
       // solve for the next value of the distribution function
       // ---------------------------------------------------------------------
+      f=fprev;
       solve(a_kinetic == L_kinetic, f, boundary_condition_f);
     
       // ---------------------------------------------------------------------
@@ -508,6 +521,7 @@ int main()
       }
       jpar=assemble(current_form);
       temp=assemble(temp_form);
+      temp=temp/ne;
 
       // ---------------------------------------------------------------------
       // After t0 set the electric field to conserve the parrallel current
@@ -521,14 +535,27 @@ int main()
           // Efield = Efield*pow(jpartm/jpar,1);  // Is this the best way to constrain?
                                         // think this through
           // need a Newton step here.
-          delJ = jpar-jpartm;
+          f=fprev;
+	  Efieldtm=Efield;
+	  jpar0=jpar;
+          Efield=Efieldtm+0.00001;
+         
+	  a_kinetic.E = Efield;
+          solve(a_kinetic == L_kinetic, f, boundary_condition_f);
+          jpar=assemble(current_form);
 
-          Efieldtm = Efield;
-          Efield = Efield - delJ/dJdE;
+	  delJ = jpar-jpar0;
+        
+          Efield = Efieldtm+(jpartm-jpar0)/delJ*0.00001;
           delE = fabs((Efield-Efieldtm)/Efieldtm);
 
           std::cout << "Efield " <<Efield<<" "<<Efieldtm<<" "<<delE<<std::endl;
           std::cout << "jpar " <<jpar<<" "<<jpartm<<std::endl;
+      }
+      if (t==t0) {
+	  a_kinetic.dtau=dtau_new;
+	  L_kinetic.dtau=dtau_new;
+          dtau=dtau_new;
       }
       a_kinetic.E = Efield;
     }
@@ -542,7 +569,7 @@ int main()
     // ---------------------------------------------------------------------
     // Write time stamps of f, phi, psi etc. to separate files. 
     // ---------------------------------------------------------------------
-    if (it % 100==0) {
+    if (it % 10==0) {
       file_f << f, t;
       file_phi << phi, t;
       file_psi << psi, t;    
@@ -560,6 +587,8 @@ int main()
     // Advance the time
     // ---------------------------------------------------------------------
     t= t+dtau;
+    
+    // update the a_kinetic.dtau and L_kinetic.dtau
   }
   swatch.stop();
   list_timings();

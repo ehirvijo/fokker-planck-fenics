@@ -1,11 +1,17 @@
-nt 200
-Efield 0.01
+nt 1000
+nui 1
+Efield 0.0015
 t0 100
-Tif -0.5
-nif 0.5
-srcmax 10.0
+Tif -0.99
+nif 0
+srcmax 2032129.0
 jcon 1
-tf 150
-pltout 1
+srcsig 0.01
+tf 100.01
+pltout 0
 ionfunc 1
-
+gamma_src 30000
+gamma_c 20
+dtau 1
+dtau_new 0.0001
+Eitsmx 100
