@@ -22,7 +22,7 @@ void Phiistate::eval(Array<double>& values, const Array<double>& x) const
 void Phiistate::compute_coeffs() 
 {
   if (ionfunc==0) {
-    if (t>=t0) {
+    if (t>=t0 & t0!=-1) {
       phii0 = phi0*(1.0 + phif*(1.0 - exp(-gamma_phi*(t-t0))));
       Ti = Ti0*(1.0 + Tif*(1.0 - exp(-gamma_phi*(t-t0))));
     } else {

@@ -15,7 +15,7 @@ void Source::eval(Array<double>& values, const Array<double>& x) const
 // A method to compute the coefficents at this time
 void Source::compute_coeffs()
 {
-  if (t>=t0 && t<=tf) {
+  if (t>=t0 && t<=tf && t0!=-1) {
     src0 = srcmax*(1.0 - exp(-gamma_src*(t-t0)));
   } else {
     src0 = 0.0;

@@ -84,8 +84,9 @@ int main()
   // ---------------------------------------------------------------
 
   double Ti0(1.0e4); // initial ion temperature
-  double Tiz(1.0e4); // initial impurity ion temperature
+  double Tz0(1.0e4); // initial impurity ion temperature
   double Tif(0.0); // fraction of ion temperature change in collapse time
+  double Tzf(0.0); // fraction of impurity temperature change in collapse time
   double ni0(1.0); // initial ion density fraction to reference density
   double nif(0.0); // fraction of ion density change in collapse time
   double ni(0.0); // ion number density
@@ -106,24 +107,30 @@ int main()
   double ne0(0.0); // initial electron number density
   double jpar(0.0); // parallel current
   double jpar0(0.0); // parallel current cache
-  double jpartm(0.0); // parallel current from the previous timestep
+  double jpartm(0.0); // parallel current at the time of current conservation
+  double jparprev(0.0); // parallel current from the previous timestep
   double Efieldtm(0.0); // electric field from the previous timestep
   double delE(1.0); // normalized electric field change
   double delJ(0.0); // normalized J change
   double dJdE(0.0); // derivative of current with E, ie 1/eta
   double temp(1.5); // temperature
+  double trigger_thresh(1.e-3); // Threshold dln(J)/dt to trigger impurities
+  int restart = 0; // read initial state from restart files
+  int impurity_T_seperate = 0; // Switch for seperate ion and impurity temps
   int jcon = 0; // conserve current after t0
   int setcurrent = 1; // current record switch
   int ionfunc = 0; // the time advance method for the ions
   int Eitsmx_set = 10; // input to maximum number of electric field iterations
   int Eitsmx = 1; // maximum number of electric field iterations
   int Eits = 0; // electric field iterations
+  int it = 0; // iteration number
 
   // ---------------------------------------------------------------
   // Define the computational parameters 
   // ---------------------------------------------------------------
 
   int nt(200); // number of iterations
+  int inint(0); // the initial iteration number for restarts
   int pltout(0); // realtime plotting option
   
   // ---------------------------------------------------------------
@@ -164,8 +171,13 @@ int main()
         in>>Tnorm;
       } else if (type == "Ti0") {
         in>>Ti0;
+      } else if (type == "Tz0") {
+        in>>Tz0;
+        impurity_T_seperate=1;
       } else if (type == "Tif") {
         in>>Tif;
+      } else if (type == "Tzf") {
+        in>>Tzf;
       } else if (type == "ni0") {
         in>>ni0;
       } else if (type == "nif") {
@@ -181,7 +193,7 @@ int main()
       } else if (type == "nuz") {
 	in>>val;
 	nuz=val;
-      }else if (type == "Efield") {
+      } else if (type == "Efield") {
         in>>val;
         Efield=val;
       } else if (type == "t0") {
@@ -190,6 +202,10 @@ int main()
         in>>tf;
       } else if (type == "jcon") {
         in>>jcon;
+      } else if (type == "restart") {
+        in>>restart;
+      } else if (type == "trigger_thresh") {
+        in>>trigger_thresh;
       } else if (type == "Eitsmx") {
         in>>Eitsmx_set;
       } else if (type == "ionfunc") {
@@ -279,6 +295,60 @@ int main()
   DirichletBC boundary_condition_psi(V, psi_greens_solution, boundaries, 1); 
   DirichletBC boundary_condition_f (V, zero , boundaries, 1);
 
+  if (restart==1) {
+    // ---------------------------------------------------------------------
+    // Read in the restart data
+    // ---------------------------------------------------------------------
+    // Read the final state for a restart
+    //mesh = Mesh('saved_mesh.xml'); //This could be assumed the same
+    f = Function(V,"saved_f.xml");
+    phi = Function(V,"saved_phi.xml");
+    psi = Function(V,"saved_psi.xml");
+    phii = Function(V,"saved_phii.xml");
+    psii = Function(V,"saved_psii.xml");
+    phiz = Function(V,"saved_phiz.xml");
+    psiz = Function(V,"saved_psiz.xml");
+    // Read input variables that are needed for restart
+    std::ifstream file_inp("saved_input.dat");
+    float val;
+    if (file_inp.is_open()) {
+      while(getline(file_inp,line)) {
+        std::istringstream in(line);
+        std::string(type);
+        in>>type;
+        if (type == "dtau") {
+          in>>val;
+          dtau=val;
+        } else if (type == "Efield") {
+          in>>val;
+          Efield=val;
+        } else if (type == "t") {
+          in>>t;
+        } else if (type == "inint") {
+          in>>inint;
+        } else if (type == "t0") {
+          in>>t0;
+        } else if (type == "tf") {
+          in>>tf;
+        } else if (type == "ne0") {
+          in>>ne0;
+        } else if (type == "nem") {
+          in>>nem;
+        } else if (type == "ni0") {
+          in>>ni0;
+        } else if (type == "ni") {
+          in>>ni;
+        } else if (type == "niz") {
+          in>>niz;
+        }
+      }
+    }
+    file_inp.close();
+  }
+
+  if (impurity_T_seperate==0) Tz0=Ti0;
+
+
   // ---------------------------------------------------------------------
   // Set ion potential parameters
   // the redundant variables should be collapsed into one
@@ -299,8 +369,8 @@ int main()
   psii_state.gamma_psi=gamma_c;
   phii_state.t0=t0;
   psii_state.t0=t0;
-  phii_state.t=0;
-  psii_state.t=0;
+  phii_state.t=t;
+  psii_state.t=t;
   psii_state.ionfunc=ionfunc;
   phii_state.ionfunc=ionfunc;
   phii_state.compute_coeffs();
@@ -316,10 +386,10 @@ int main()
   psiz_state.psi0=niz;
   phiz_state.phif=nif;
   psiz_state.psif=nif;
-  phiz_state.Ti0=Ti0; 
-  psiz_state.Ti0=Ti0; 
-  phiz_state.Tif=Tif;
-  psiz_state.Tif=Tif;
+  phiz_state.Ti0=Tz0; 
+  psiz_state.Ti0=Tz0; 
+  phiz_state.Tif=Tzf;  //the time dependence of the impurity vs ions isnt
+  psiz_state.Tif=Tzf;  //fully resolved yet.  need to think this through.
   phiz_state.Tnorm=Tnorm;
   psiz_state.Tnorm=Tnorm;
   phiz_state.mu=muz;
@@ -328,8 +398,8 @@ int main()
   psiz_state.gamma_psi=gamma_c;
   phiz_state.t0=t0;
   psiz_state.t0=t0;
-  phiz_state.t=0;
-  psiz_state.t=0;
+  phiz_state.t=t;
+  psiz_state.t=t;
   psiz_state.ionfunc=ionfunc;
   phiz_state.ionfunc=ionfunc;
   phiz_state.compute_coeffs();
@@ -345,7 +415,7 @@ int main()
   s.srcsig=srcsig;
   s.t0=t0;
   s.tf=tf;
-  s.t=0;
+  s.t=t;
   s.compute_coeffs();
 
   // ---------------------------------------------------------------------
@@ -354,29 +424,43 @@ int main()
   gs.gamma_g=gamma_g;
   gs.gmax=gmax;
   gs.t0=t0;
-  gs.t=0;
+  gs.t=t;
   gs.compute_coeffs();
   g.interpolate(gs);
 
   // ---------------------------------------------------------------------
   // Project the initial state to the finite element space and take a copy
   // ---------------------------------------------------------------------
-  f.interpolate(initial_state);
+  if (restart==0) f.interpolate(initial_state);
   fprev=f;
 
   // ---------------------------------------------------------------------
   // Calculate the initial density and save it
   // ---------------------------------------------------------------------
   ne=assemble(density_form);
-  ne0=ne;
-  ni0=ne; //This goes against the input ni0 earlier, sort this out
-  ni=ni0;
+  if (restart==0) { 
+    ne0=ne;
+    ni0=ne; //This goes against the input ni0 earlier, sort this out
+    ni=ni0;
+  }
+
+  // ---------------------------------------------------------------------
+  // Calculate the initial current density 
+  // ---------------------------------------------------------------------
+  jpar=assemble(current_form);
+
+  // ---------------------------------------------------------------------
+  // Calculate the initial temperature
+  // ---------------------------------------------------------------------
+  temp=assemble(temp_form);
+  temp=temp/ne;
 
   // ---------------------------------------------------------------------
   // Set up a file for storing the solution (for creating a movie with paraview)
   // The rename calls ensure the variables are named correctly in the files.
   // ---------------------------------------------------------------------
-
+  //Need to set up an append of the solution output on restart
+  //XDMFFile file_f("f.xdmf");  //try this
   File file_f("f.pvd");
   File file_phi("phi.pvd");
   File file_phii("phii.pvd");
@@ -384,7 +468,6 @@ int main()
   File file_psi("psi.pvd");
   File file_psii("psii.pvd");
   File file_psiz("psiz.pvd");
-  std::ofstream file_dis("discharge.dat");
   f.rename("f","f");
   phi.rename("phi","phi"); 
   psi.rename("psi","psi");
@@ -392,6 +475,18 @@ int main()
   psii.rename("psii","psii");
   phiz.rename("phiz","phiz");
   psiz.rename("psiz","psiz");
+
+  std::ofstream file_pre;
+  std::ofstream file_dis;
+  if (restart==0) {
+    file_pre.open("predischarge.dat");
+    file_dis.open("discharge.dat");
+  } else {
+    file_pre.open("predischarge.dat",std::ofstream::app);
+    file_dis.open("discharge.dat",std::ofstream::app);
+  }
+  file_pre.precision(10);
+  file_dis.precision(10);
 
   // ---------------------------------------------------------------------
   // Loop over time, this should be extremely simple now because all 
@@ -401,9 +496,9 @@ int main()
   swatch.stop();
   swatch = Timer("Time loop and problem solving");
   
-  for (int it = 1; it <= nt; it++) {
+  for (it = inint+1; it <= inint+nt; it++) {
 
-    std::cout<<"time step: "<<it<<"/"<<nt<<" time: "<<t<< std::endl;
+    std::cout<<"time step: "<<it<<"/"<<inint+nt<<" time: "<<t<< std::endl;
 
     // ---------------------------------------------------------------------
     // On the fly plotting for simple studies, use paraview to generate 
@@ -429,7 +524,7 @@ int main()
     // ---------------------------------------------------------------------
     // Calculate the electron number density
     // ---------------------------------------------------------------------
-    nem=ne;
+    if (restart==0 || it>inint+1) nem=ne;
     ne=assemble(density_form);
 
     // ---------------------------------------------------------------------
@@ -443,22 +538,22 @@ int main()
       // from the ne source, then sets the density coefficient in the ion
       // distributions.  It works by a rule, for increasing density
       // niz is increased, for decreasing, niz and ni0 are equally decreased.
-      if (t>=t0) {
-      if (ne-nem>=0.0) {
-        niz=niz+(ne-nem)/Zi;
-      } else {
-        ni=ni*ne/nem;
-        niz=niz*ne/nem;
-      }
+      if (t>=t0 && t0!=-1) {
+        if (ne-nem>=0.0) {
+          niz=niz+(ne-nem)/Zi;
+        } else {
+          ni=ni*ne/nem;
+          niz=niz*ne/nem;
+        }
       }
       phii_state.phi0=ni;
       psii_state.psi0=ni;
       phiz_state.phi0=niz;
       psiz_state.psi0=niz;
       phii_state.Ti0=Ti0/1.5*temp;
-      psii_state.Ti0=Ti0/1.5*temp;
-      phiz_state.Ti0=Ti0/1.5*temp;
-      psiz_state.Ti0=Ti0/1.5*temp;
+      psii_state.Ti0=Ti0/1.5*temp;  // this 1.5, related to the initial T
+      phiz_state.Ti0=Tz0/1.5*temp;  // should be variable, not hard coded
+      psiz_state.Ti0=Tz0/1.5*temp;
     }
     phii_state.t=t;
     psii_state.t=t;
@@ -497,10 +592,14 @@ int main()
     // Iterate for the electric field constraint, if set, else just one step
     // ---------------------------------------------------------------------
     Eits=0;
-    if (jcon!=1 || t<t0) {
+    if (jcon!=1 || t<t0 || t0==-1) {
       Eitsmx=1;
     } else {
       Eitsmx=Eitsmx_set;
+    }
+
+    if (jcon==1 && t0==-1) {
+       jparprev=jpar;
     }
 
     while (Eits<Eitsmx && delE>1e-4) {
@@ -514,9 +613,12 @@ int main()
       // ---------------------------------------------------------------------
       // Calculate the parallel current density for the electric field update
       // ---------------------------------------------------------------------
-      if (t>=t0 && setcurrent==1) {
+      if (t>=t0 && setcurrent==1 && t0!=-1) {
         jpartm=jpar;
         dJdE=jpar/Efield;
+        a_kinetic.dtau=dtau_new;
+        L_kinetic.dtau=dtau_new;
+        dtau=dtau_new;
         setcurrent = 0;
       }
       jpar=assemble(current_form);
@@ -527,7 +629,7 @@ int main()
       // After t0 set the electric field to conserve the parrallel current
       // ---------------------------------------------------------------------
       std::cout << "Eits " <<Eits<<" "<<delE<<" Eitsmx "<<Eitsmx<<std::endl;
-      if (jcon==1 && t>=t0 && jpar!=0.0) {
+      if (jcon==1 && t>=t0 && jpar!=0.0 && t0!=-1) {
 
           // her for the function is delJ=jpartm-jpar and the ordinate is 
           // Efield.  At some Efield, delJ=0.
@@ -552,11 +654,8 @@ int main()
           std::cout << "Efield " <<Efield<<" "<<Efieldtm<<" "<<delE<<std::endl;
           std::cout << "jpar " <<jpar<<" "<<jpartm<<std::endl;
       }
-      if (t==t0) {
-	  a_kinetic.dtau=dtau_new;
-	  L_kinetic.dtau=dtau_new;
-          dtau=dtau_new;
-      }
+
+
       a_kinetic.E = Efield;
     }
     delE=1;
@@ -569,7 +668,7 @@ int main()
     // ---------------------------------------------------------------------
     // Write time stamps of f, phi, psi etc. to separate files. 
     // ---------------------------------------------------------------------
-    if (it % 10==0) {
+    if (inint+it % 10==0) {
       file_f << f, t;
       file_phi << phi, t;
       file_psi << psi, t;    
@@ -577,23 +676,71 @@ int main()
       file_psii << psii, t;    
       file_phiz << phiz, t;
       file_psiz << psiz, t;    
+      // Save the final state for a restart
+      File("saved_mesh.xml") << mesh;
+      File("saved_f.xml") << f;
+      File("saved_phi.xml") << phi;
+      File("saved_psi.xml") << psi;
+      File("saved_phii.xml") << phii;
+      File("saved_psii.xml") << psii;
+      File("saved_phiz.xml") << phiz;
+      File("saved_psiz.xml") << psiz;
+      // Save input variables that are needed for restart
+      std::ofstream file_input("saved_input.dat");
+      file_input.precision(16);
+      file_input << "dtau "<< dtau <<"\n";
+      file_input << "Efield " << Efield <<"\n";
+      file_input << "t " << t <<"\n";
+      file_input << "inint " << it-1 <<"\n";
+      file_input << "t0 " << t0 <<"\n";
+      file_input << "tf " << tf <<"\n";
+      file_input << "ne0 " << ne0 <<"\n";
+      file_input << "nem " << nem <<"\n";
+      file_input << "ni0 " << ni0 <<"\n";
+      file_input << "ni " << ni <<"\n";
+      file_input << "niz " << niz <<"\n";
+      file_input.close();
     }
 
-    file_dis << it <<" "<< t <<" "<< dtau <<" "<< jpar <<" "<< Efield 
+    if (t<t0 || t0==-1) {
+      file_pre << it <<" "<< t <<" "<< dtau <<" "<< jpar <<" "<< Efield 
              <<" "<< phii_state.Ti <<" "<< ni <<" "<< niz <<" "<< ne 
              <<" "<< temp << "\n" << std::flush;
+    } else {
+      file_dis << it <<" "<< t <<" "<< dtau <<" "<< jpar <<" "<< Efield 
+             <<" "<< phii_state.Ti <<" "<< ni <<" "<< niz <<" "<< ne 
+             <<" "<< temp << "\n" << std::flush;
+    }
 	
     // ---------------------------------------------------------------------
     // Advance the time
     // ---------------------------------------------------------------------
     t= t+dtau;
     
+    if (jcon==1 && t0==-1) {
+       jpar=assemble(current_form);
+       // If the current has settled in the t0=-1 case, turn on the impurities
+       if (fabs((jpar-jparprev)/jparprev) < trigger_thresh) {
+         t0=t;
+         phii_state.t0=t0;
+         psii_state.t0=t0;
+         phiz_state.t0=t0;
+         psiz_state.t0=t0;
+         s.t0=t0;
+         tf=t0+tf;  // the tf read in is effectively delta_tf
+         s.tf=tf;
+         gs.t0=t0;
+       }
+    }
+
     // update the a_kinetic.dtau and L_kinetic.dtau
   }
   swatch.stop();
   list_timings();
   
+  file_pre.close();
   file_dis.close();
+
 
   if (pltout == 1) interactive();
   return 0;

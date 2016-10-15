@@ -22,7 +22,7 @@ void Psiistate::eval(Array<double>& values, const Array<double>& x) const
 void Psiistate::compute_coeffs()
 {
   if (ionfunc==0) {
-    if (t>=t0) {
+    if (t>=t0 && t0!=-1) {
       psii0 = psi0*(1.0 + psif*(1.0 - exp(-gamma_psi*(t-t0))));
       Ti = Ti0*(1.0 + Tif*(1.0 - exp(-gamma_psi*(t-t0))));
     } else {

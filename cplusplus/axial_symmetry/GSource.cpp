@@ -14,7 +14,7 @@ void GSource::eval(Array<double>& values, const Array<double>& x) const
 // A method to compute the coefficents at this time
 void GSource::compute_coeffs()
 {
-  if (t>=t0) {
+  if (t>=t0 && t0!=-1) {
     g0 = gmax*(1.0 - exp(-gamma_g*(t-t0)));
   } else {
     g0 = 0.0;
